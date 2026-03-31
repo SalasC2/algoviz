@@ -1,0 +1,24 @@
+.btn {
+    /* shape */
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+
+    /* feel */
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    transition: opacity 0.15s ease;
+}
+
+.btn-primary {
+    /* only colors live here */
+    background: #38bdf8;
+    color: #0f172a;
+}
+
+.btn-danger {
+    /* only colors live here */
+    background: #ef4444;
+    color: white;
+}

@@ -1,0 +1,16 @@
+.icon-btn {
+    cursor: pointer;
+    color: var(--badge-gray);
+    display: flex;
+    align-items: center;
+}
+
+.icon-btn:hover {
+    color: var(--badge-red);
+}
+
+.icon-btn-confirm {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
