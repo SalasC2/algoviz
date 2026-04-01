@@ -62,3 +62,25 @@
 .form-row select:focus {
     border-color: var(--accent);
 }
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.problem-label {
+    font-size: 12px;
+    align-items: center;
+    padding: 4px 0 0 0;
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.required {
+    color: var(--badge-red);
+    font-size: 14px;
+}
