@@ -69,6 +69,13 @@
     align-items: flex-start;
 }
 
+.form-field label {
+   min-height: 32px;
+   display: flex;
+   align-items: flex-end;
+   padding-bottom: 4px; 
+}
+
 .problem-label {
     font-size: 12px;
     align-items: center;
@@ -83,4 +90,10 @@
 .required {
     color: var(--badge-red);
     font-size: 14px;
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        grid-template-columns: 1fr 1fr;
+    }
 }
