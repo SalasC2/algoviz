@@ -7,7 +7,7 @@ import { PatternList } from './components/features/PatternList/PatternList';
 import { ProgressBar } from './components/features/ProgressCard/ProgressCard';
 
 function App() {
-  const { data, grouped, handleSave, handleDelete } = useProblems();
+  const { grouped, handleSave, handleDelete } = useProblems();
 
   return (
     <div className="app">
