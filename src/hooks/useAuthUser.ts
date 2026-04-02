@@ -6,7 +6,7 @@ export const useAuthUser = () => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const session = supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       setUser(data.session?.user ?? null);
     });
 
