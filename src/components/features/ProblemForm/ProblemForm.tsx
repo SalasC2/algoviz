@@ -60,6 +60,17 @@ export const ProblemForm = ({ handleSave }: Props) => {
                     />
                 </div>
                 <div className="form-field">
+                    <label className="problem-label"> Pattern <span className="required">*</span> </label>
+                    <select
+                        value={form.pattern}
+                        onChange={(e) => setForm({ ...form, pattern: e.target.value })}>
+                        <option value=""> Select pattern </option>
+                        {CORE_PATTERNS.map((pattern) => (
+                            <option key={pattern} value={pattern}> {pattern} </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="form-field">
                     <label className="problem-label"> Problem Number </label>
                     <input
                         value={form.problemNumber ?? ""}
@@ -75,17 +86,6 @@ export const ProblemForm = ({ handleSave }: Props) => {
                         <option key={"Easy"} value={"Easy"}> Easy </option>
                         <option key={"Medium"} value={"Medium"}> Medium </option>
                         <option key={"Hard"} value={"Hard"}> Hard </option>
-                    </select>
-                </div>
-                <div className="form-field">
-                    <label className="problem-label"> Pattern <span className="required">*</span> </label>
-                    <select
-                        value={form.pattern}
-                        onChange={(e) => setForm({ ...form, pattern: e.target.value })}>
-                        <option value=""> Select pattern </option>
-                        {CORE_PATTERNS.map((pattern) => (
-                            <option key={pattern} value={pattern}> {pattern} </option>
-                        ))}
                     </select>
                 </div>
             </div>

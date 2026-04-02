@@ -12,7 +12,7 @@
 
 .form-row {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 8px;
     margin-bottom: 8px;
 }
@@ -70,7 +70,7 @@
 }
 
 .form-field label {
-   min-height: 32px;
+   min-height: 60px;
    display: flex;
    align-items: flex-end;
    padding-bottom: 4px; 

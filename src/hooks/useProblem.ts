@@ -1,28 +1,82 @@
 import { useState, useEffect } from 'react';
+
+import { useAuthUser } from './useAuthUser';
+import { supabase } from '../utils/supabase'
+
 import type { FormType } from '../types/';
 
-const STORAGE_KEY = "algoviz_problems";
-
 export const useProblems = () => {
-    const [data, setData] = useState<FormType[]>(() => {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
-    });
+    const user = useAuthUser();
+
+    const [data, setData] = useState<FormType[]>([]);
+
+    const toSnakeCase = (form: FormType) => ({
+        problem: form.problem,
+        problem_number: form.problemNumber ?? 0,
+        pattern: form.pattern,
+        difficulty: form.difficulty,
+        date: form.date,
+        solved: form.solved,
+        time_complexity: form.timeComplexity ?? "",
+        space_complexity: form.spaceComplexity ?? "",
+        tripped_up: form.trippedUp ?? "",
+        explanation: form.explanation,
+    })
+
+    const fromSnakeCase = (row: any): FormType => ({
+        problem: row.problem,
+        problemNumber: row.problem_number,
+        pattern: row.pattern,
+        difficulty: row.difficulty,
+        date: row.date,
+        solved: row.solved,
+        timeComplexity: row.time_complexity,
+        spaceComplexity: row.space_complexity,
+        trippedUp: row.tripped_up,
+        explanation: row.explanation,
+    })
 
     useEffect(() => {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data))
-    }, [data]);
+        if (!user) return;
 
-    const handleSave = (form: FormType) => {
-        setData(prev => [...prev, form]);
+        const fetchProblems = async () => {
+            const { data: problems, error } = await supabase
+                .from('problems')
+                .select("*")
+                .eq('user_id', user.id);
+            if (error) console.error(error);
+            else setData(problems.map(fromSnakeCase))
+        }
+
+        fetchProblems();
+    }, [user])
+
+
+    const handleSave = async (form: FormType) => {
+        if (!user) return;
+        const { data: newProblem, error } = await supabase
+            .from('problems')
+            .insert([{ ...toSnakeCase(form), user_id: user.id }])
+            .select()
+            .single();
+
+        if (error) console.error(error);
+        else setData(prev => [...prev, fromSnakeCase(newProblem)]);
     }
 
-    const handleDelete = (problem: string) => {
-        setData(prev => prev.filter((e: FormType) => e.problem !== problem));
+    const handleDelete = async (problem: string) => {
+        if (!user) return;
+        const { error } = await supabase
+            .from('problems')
+            .delete()
+            .eq('problem', problem)
+            .eq('user_id', user.id);
+        if (error) console.log(error);
+        else setData(prev => prev.filter((e: FormType) => e.problem !== problem));
     }
 
     const exportData = () => {
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json'});
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -46,5 +100,5 @@ export const useProblems = () => {
         return acc;
     }, {})
 
-    return { data, grouped, handleSave, handleDelete, exportData, importData}
+    return { data, grouped, handleSave, handleDelete, exportData, importData }
 }

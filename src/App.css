@@ -1,9 +1,12 @@
 .app {
-  padding: 16px;
+    display: grid;
+    grid-template-columns: 495px 1fr;
+    gap: 24px;
+    padding: 16px;
+    align-items: start;
 }
 
 .form-column {
-  position: sticky;
   top: 0;
   background: var(--bg);
   z-index: 10;
