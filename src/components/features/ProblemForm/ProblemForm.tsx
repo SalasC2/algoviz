@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { Button } from "../../ui/Button"
+import { DropdownSelect } from '../../ui/DropdownSelect/DropdownSelect';
 
 import type { FormType } from "../../../types";
 import { CORE_PATTERNS } from "../../../constants/patterns";
@@ -14,7 +15,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
 
     let [form, setForm] = useState<FormType>({
         "problem": "",
-        "pattern": "",
+        "patterns": [],
         "solved": false,
         "date": "",
         "problemNumber": undefined,
@@ -30,7 +31,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
         handleSave(formWithDate);
         setForm({
             problem: "",
-            pattern: "",
+            patterns: [],
             solved: false,
             date: "",
             problemNumber: undefined,
@@ -44,7 +45,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
 
     const isDisabled = (): boolean => {
         return !form.problem
-            || !form.pattern
+            || form.patterns.length === 0
             || !form?.difficulty
             || !form.explanation
     }
@@ -60,33 +61,34 @@ export const ProblemForm = ({ handleSave }: Props) => {
                     />
                 </div>
                 <div className="form-field">
-                    <label className="problem-label"> Pattern <span className="required">*</span> </label>
-                    <select
-                        value={form.pattern}
-                        onChange={(e) => setForm({ ...form, pattern: e.target.value })}>
-                        <option value=""> Select pattern </option>
-                        {CORE_PATTERNS.map((pattern) => (
-                            <option key={pattern} value={pattern}> {pattern} </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="form-field">
                     <label className="problem-label"> Problem Number </label>
                     <input
                         value={form.problemNumber ?? ""}
                         onChange={(e) => setForm({ ...form, problemNumber: Number(e.target.value) })}
                     />
                 </div>
+            </div>
+
+            <div className="form-row">
+                <div className="form-field">
+                    <label className="problem-label"> Pattern(s) <span className="required">*</span> </label>
+                    <DropdownSelect
+                        options={CORE_PATTERNS}
+                        value={form.patterns}
+                        onChange={(patterns) => setForm({ ...form, patterns })}
+                        multiple={true}
+                        placeholder="Select patterns"
+                    />
+                </div>
+
                 <div className="form-field">
                     <label className="problem-label"> Difficulty <span className="required">*</span> </label>
-                    <select
+                    <DropdownSelect
+                        options={["Easy", "Medium", "Hard"]}
                         value={form.difficulty ?? ""}
-                        onChange={(e) => setForm({ ...form, difficulty: e.target.value as "Easy" | "Medium" | "Hard" })}>
-                        <option value=""> Select Difficulty </option>
-                        <option key={"Easy"} value={"Easy"}> Easy </option>
-                        <option key={"Medium"} value={"Medium"}> Medium </option>
-                        <option key={"Hard"} value={"Hard"}> Hard </option>
-                    </select>
+                        onChange={(difficulty) => setForm({ ...form, difficulty })}
+                        placeholder="Select difficulty"
+                    />
                 </div>
             </div>
 

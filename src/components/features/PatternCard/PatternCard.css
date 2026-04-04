@@ -25,7 +25,7 @@
     justify-content: center;
     border: 0.5px solid;
     border-radius: 50%;
-    padding: 4px 6px; 
+    padding: 4px 6px;
     aspect-ratio: 1;
     line-height: 1;
     font-size: 12px;
@@ -34,30 +34,45 @@
 }
 
 .pattern-length-gray {
-    background-color : var(--badge-gray-bg);
+    background-color: var(--badge-gray-bg);
     color: var(--badge-gray);
     border-color: var(--badge-gray);
 }
 
 .pattern-length-yellow {
-    background-color : var(--badge-yellow-bg);
+    background-color: var(--badge-yellow-bg);
     color: var(--badge-yellow);
     border-color: var(--badge-yellow);
 }
 
 .pattern-length-blue {
-    background-color : var(--badge-blue-bg);
+    background-color: var(--badge-blue-bg);
     color: var(--badge-blue);
     border-color: var(--badge-blue);
 }
 
 .pattern-length-green {
-    background-color : var(--badge-green-bg);
+    background-color: var(--badge-green-bg);
     color: var(--badge-green);
     border-color: var(--badge-green);
 }
 
-.pattern-card-content ul{
+.pattern-card-content {
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+}
+
+.pattern-card-content {
+    max-height: 300px;
+    /* collapsed height */
+}
+
+.pattern-card-content.expanded {
+    max-height: 1000px;
+    /* big enough to fit content */
+}
+
+.pattern-card-content ul {
     width: 100%;
     margin-top: 20px;
     padding: 0;
@@ -85,7 +100,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    border : 0.5px solid;
+    border: 0.5px solid;
     border-radius: 4px;
     font-size: 11px;
     padding: 2px 4px;
@@ -114,20 +129,38 @@
     align-items: center;
     min-width: 0;
     gap: 8px;
+    padding-bottom: 4px;
 }
 
-.problem-explanation {
+.problem-explanation p {
     display: block;
     width: 100%;
-    white-space: nowrap;      /* force everything onto one line */
-    overflow: hidden;          /* hide anything that spills out */
-    text-overflow: ellipsis;  /* show ... where it gets cut off */
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: 12px;
     color: var(--text);
+}
+
+.problem-expanded {
+    padding: 8px 0;
+    border-bottom: 0.5px solid var(--border);
+}
+
+.problem-expanded:first-child {
+    padding-top: 0;
+}
+
+.problem-expanded:last-child {
+    border-bottom: none;
 }
 
 .more-problems {
     font-size: 12px;
     color: var(--text);
-    margin: 4px 0 0 0;
+    /* margin: 1px 0 0 0; */
+    width: fit-content;
+    cursor: pointer;
+    /* padding: 1px 0 0 0; */
 }

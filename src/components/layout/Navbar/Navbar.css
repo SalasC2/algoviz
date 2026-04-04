@@ -1,5 +1,6 @@
 .navbar {
     display: flex;
+    height: 72px;
     padding: 4px 24px;
     justify-content: space-between;
     align-items: center;
@@ -33,6 +34,19 @@
     flex: 1;
     display: flex;
     justify-content: center;
+}
+
+.navbar-brand {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+p {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    padding: 4px 0 0 0;
 }
 
 .user-avatar {

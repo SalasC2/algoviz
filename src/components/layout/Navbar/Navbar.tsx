@@ -2,9 +2,9 @@ import "./Navbar.css";
 
 import { supabase } from "../../../utils/supabase";
 import type { User } from "@supabase/supabase-js";
-import algovizLogo from '../../../assets/algoviz.png';
+import algovizIcon from '../../../assets/algoviz.png';
 
-import { Button } from "../Button"
+import { Button } from "../../ui/Button"
 
 type NavbarProps = {
     user: User | null;
@@ -29,7 +29,9 @@ export const Navbar = ({ user }: NavbarProps) => {
     return (
         <div className="navbar">
             <div className="navbar-left">
-                <img className="algoviz-logo" src={algovizLogo} />
+                <img className="algoviz-logo" src={algovizIcon} />
+                <span className="navbar-brand">AlgoViz</span>
+                <p> Track your LeetCode patterns. Build real intuition. </p>
             </div>
             <div className="navbar-right">
                 {user ? (

@@ -1,0 +1,85 @@
+.dropdown-select-container {
+    position: relative;
+    width: 100%;
+}
+
+.dropdown-select-btn {
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 260px;
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    z-index: 100;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 4px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.dropdown-item:hover {
+    background: var(--code-bg);
+}
+
+.dropdown-item label {
+    font-size: 12px;
+    white-space: nowrap;
+    cursor: pointer;
+    color: var(--text-h);
+}
+
+.dropdown-item input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.dropdown-item.selected label {
+    color: var(--accent);
+}
+
+.dropdown-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.dropdown-tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--accent-bg);
+    color: var(--accent);
+    border: 0.5px solid var(--accent-border);
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+}
+
+.dropdown-tag button {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    padding: 0;
+    font-size: 14px;
+    line-height: 1;
+}

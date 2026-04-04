@@ -20,7 +20,7 @@ export type Database = {
           difficulty: string | null
           explanation: string
           id: string
-          pattern: string
+          pattern: string[]
           problem: string
           problem_number: number | null
           solved: boolean | null
@@ -34,7 +34,7 @@ export type Database = {
           difficulty?: string | null
           explanation: string
           id?: string
-          pattern: string
+          pattern: string[]
           problem?: string
           problem_number?: number | null
           solved?: boolean | null
@@ -48,7 +48,7 @@ export type Database = {
           difficulty?: string | null
           explanation?: string
           id?: string
-          pattern?: string
+          pattern?: string[]
           problem?: string
           problem_number?: number | null
           solved?: boolean | null

@@ -3,12 +3,31 @@
     grid-template-columns: 495px 1fr;
     gap: 24px;
     padding: 16px;
-    align-items: start;
+
+    flex: 1;
+    min-height: 0; 
 }
 
 .form-column {
-  top: 0;
-  background: var(--bg);
-  z-index: 10;
-  padding-top: 16px;
+  position: sticky;
+  top: 72px; /* adjust based on navbar height */
+  height: fit-content;
+}
+
+.content-column {
+    overflow-y: auto;
+    min-height: 0;
+}
+
+@media (max-width: 768px) {
+    .app {
+        grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+    }
+
+    .content-column {
+      overflow-y: visible;
+      height: auto;
+    }
 }

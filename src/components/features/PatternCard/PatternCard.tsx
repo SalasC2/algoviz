@@ -1,17 +1,19 @@
-
-import { IconButton } from "../../ui/IconButton/IconButton";
+import { useState } from 'react';
+import { IconButton } from "../../ui/IconButton";
 import './PatternCard.css';
+import type { FormType } from '../../../types';
 
 type Props = {
     pattern: string,
-    problems: [],
+    problems: FormType[],
     handleDelete: (problem: string) => void;
+    onSelectProblem?: (problem: FormType) => void; // for side panel
 }
 
-
-export const PatternCard = ({ pattern, problems, handleDelete }: Props) => {
+export const PatternCard = ({ pattern, problems, handleDelete, onSelectProblem }: Props) => {
+    const [expanded, setExpanded] = useState(false);
     const MAX_DISPLAY = 3;
-    const visible = problems.slice(0, MAX_DISPLAY);
+    const visible = expanded ? problems : problems.slice(0, MAX_DISPLAY);
     const remaining = problems.length - MAX_DISPLAY;
 
     const getBadgeClass = (count: number): string => {
@@ -31,40 +33,58 @@ export const PatternCard = ({ pattern, problems, handleDelete }: Props) => {
     return (
         <div className="pattern-card">
             <div className="pattern-card-header">
-                <h3> {pattern} </h3>
+                <h3>{pattern}</h3>
                 <span className={`pattern-length ${getBadgeClass(problems.length)}`}>
                     {problems.length}
                 </span>
             </div>
-            <div className="pattern-card-content">
+            <div className={`pattern-card-content ${expanded ? "expanded" : ""}`}>
                 {problems.length > 0 ? (
                     <>
                         <ul>
-                            {visible.map((problemObj: any) => (
-                                    <li key={problemObj.problem} className="pattern-problem">
-                                        <div className="problem-row">
-                                            <span className="problem-name">
-                                                {problemObj.problem}
-                                            </span>
-                                            <span className={`pattern-difficulty ${getDifficultyBadgeClass(problemObj?.difficulty)}`}>
-                                                {problemObj.difficulty}
-                                            </span>
-                                            <span className="delete-btn">
-                                                {<IconButton onConfirm={() => handleDelete(problemObj.problem)} />}
-                                            </span>
-                                        </div>
-                                        <p className="problem-explanation"> {problemObj.explanation} </p>
-                                    </li>
+                            {visible.map((problemObj: FormType) => (
+                                <li key={problemObj.problem} className={`pattern-problem ${expanded ? 'problem-expanded' : ''}`}>
+                                    <div className="problem-row">
+                                        <span
+                                            className="problem-name"
+                                            onClick={() => onSelectProblem?.(problemObj)}
+                                            style={{ cursor: 'pointer' }}
+                                        >
+                                            {problemObj.problem}
+                                        </span>
+                                        <span className={`pattern-difficulty ${getDifficultyBadgeClass(problemObj?.difficulty ?? "")}`}>
+                                            {problemObj.difficulty}
+                                        </span>
+                                        <span className="delete-btn">
+                                            <IconButton onConfirm={() => handleDelete(problemObj.problem)} />
+                                        </span>
+                                    </div>
 
+                                    {expanded && (
+                                        <div className="problem-explanation">
+                                            <p>{problemObj.explanation}</p>
+                                            {/* <p>⚠️ {problemObj.trippedUp || "No notes yet"}</p> */}
+                                        </div>
+                                    )}
+                                </li>
                             ))}
                         </ul>
-                        {remaining > 0 && (
-                            <p className="more-problems"> +{remaining} more </p>
+
+                        {remaining > 0 && !expanded && (
+                            <p className="more-problems" onClick={() => setExpanded(true)}>
+                                +{remaining} more
+                            </p>
+                        )}
+
+                        {expanded && problems.length > MAX_DISPLAY && (
+                            <p className="more-problems" onClick={() => setExpanded(false)}>
+                                Show less
+                            </p>
                         )}
                     </>
-                ) :
-                    <p> No problems yet</p>
-                }
+                ) : (
+                    <p>No problems yet</p>
+                )}
             </div>
         </div>
     )

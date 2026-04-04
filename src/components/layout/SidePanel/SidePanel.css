@@ -1,0 +1,194 @@
+/* backdrop */
+.side-panel-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  z-index: 999;
+}
+
+.side-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 0.5px solid var(--border);
+}
+
+.side-panel-header .edit-field {
+    width: auto;
+    height: 36px;
+    min-height: unset;
+}
+
+.side-panel-backdrop.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* panel */
+.side-panel {
+    position: fixed;
+    top: 0;
+    right: -400px; /* start offscreen */
+    width: 400px;
+    height: 100vh;
+    background: var(--bg);
+    box-shadow: -4px 0 16px rgba(0,0,0,0.1);
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 1000;
+    transition: right 0.3s ease;
+}
+
+.side-panel.visible {
+    right: 0; /* slide in */
+}
+
+.side-panel-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 8px;
+}
+
+.edit-field {
+    width: 100%;
+    padding: 8px;
+    border: 0.5px solid var(--border);  /* change this */
+    border-radius: 8px;
+    background: var(--code-bg);
+    color: var(--text-h);
+    font-size: 14px;
+    resize: vertical;
+    outline: none;
+    min-height: 100px;
+    transition: border-color 0.15s ease;
+}
+
+.edit-field:focus {
+    border-color: var(--accent);
+}
+
+.edit-field-dirty {
+    border-color: var(--badge-yellow);
+    background: var(--badge-yellow-bg);
+}
+
+textarea.edit-field {
+    min-height: 100px;
+}
+
+input.edit-field {
+    min-height: unset;
+    height: 36px;
+}
+
+.edit-btn, .save-btn, .cancel-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.edit-btn {
+    background: var(--accent-bg);
+    color: var(--accent);
+}
+
+.edit-field-dirty {
+    border-color: var(--badge-yellow);
+    background: var(--badge-yellow-bg);
+}
+
+.save-btn {
+    background: var(--badge-green-bg);
+    color: var(--badge-green);
+}
+
+.cancel-btn {
+    background: var(--badge-gray-bg);
+    color: var(--badge-gray);
+}
+
+.problem-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.problem-header span:first-child {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-h);
+}
+
+section {
+    margin-top: 16px;
+    padding-bottom: 16px;
+    border-bottom: 0.5px solid var(--border);
+}
+
+section:last-child {
+    border-bottom: none;
+}
+
+section h4 {
+    margin: 0 0 6px 0;
+    font-size: 12px;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+section p {
+    font-size: 14px;
+    color: var(--text-h);
+    line-height: 1.6;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  color: var(--text);
+}
+
+.close-btn:hover {
+    color: var(--text-h);
+}
+
+.problem-difficulty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0.5px solid;
+    border-radius: 4px;
+    font-size: 11px;
+    padding: 2px 4px;
+}
+
+.problem-difficulty-green {
+    background-color: var(--badge-green-bg);
+    color: var(--badge-green);
+    border-color: var(--badge-green);
+}
+
+.problem-difficulty-yellow {
+    background-color: var(--badge-yellow-bg);
+    color: var(--badge-yellow);
+    border-color: var(--badge-yellow);
+}
+
+.problem-difficulty-red {
+    background-color: var(--badge-red-bg);
+    color: var(--badge-red);
+    border-color: var(--badge-red);
+}

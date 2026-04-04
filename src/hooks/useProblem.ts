@@ -13,7 +13,7 @@ export const useProblems = () => {
     const toSnakeCase = (form: FormType) => ({
         problem: form.problem,
         problem_number: form.problemNumber ?? 0,
-        pattern: form.pattern,
+        pattern: form.patterns,
         difficulty: form.difficulty,
         date: form.date,
         solved: form.solved,
@@ -24,9 +24,10 @@ export const useProblems = () => {
     })
 
     const fromSnakeCase = (row: any): FormType => ({
+        id: row.id,
         problem: row.problem,
         problemNumber: row.problem_number,
-        pattern: row.pattern,
+        patterns: row.pattern,
         difficulty: row.difficulty,
         date: row.date,
         solved: row.solved,
@@ -64,6 +65,20 @@ export const useProblems = () => {
         else setData(prev => [...prev, fromSnakeCase(newProblem)]);
     }
 
+    const handleUpdate = async (updated: FormType) => {
+        if (!user) return;
+        const { error } = await supabase
+            .from('problems')
+            .update(toSnakeCase(updated))
+            .eq('id', updated.id ?? "")
+            .eq('user_id', user.id);
+
+        if (error) console.error(error);
+        else setData(prev => prev.map(p =>
+            p.id === updated.id ? updated : p
+        ));
+    }
+
     const handleDelete = async (problem: string) => {
         if (!user) return;
         const { error } = await supabase
@@ -94,11 +109,12 @@ export const useProblems = () => {
     }
 
     const grouped = data.reduce((acc: any, problem: any) => {
-        const pattern = problem.pattern;
-        if (!acc[pattern]) acc[pattern] = [];
-        acc[pattern].push(problem);
+        problem.patterns?.forEach((pattern: string) => {
+            if (!acc[pattern]) acc[pattern] = [];
+            acc[pattern].push(problem);
+        });
         return acc;
     }, {})
 
-    return { data, grouped, handleSave, handleDelete, exportData, importData }
+    return { data, grouped, handleSave, handleUpdate, handleDelete, exportData, importData }
 }

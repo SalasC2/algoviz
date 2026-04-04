@@ -1,8 +1,9 @@
 // FormType and other shared types live here
 
 export type FormType = {
+    id?: string;
     problem: string,
-    pattern: string,
+    patterns: string[],
     solved: boolean,
     date: string,
     problemNumber?: number,
