@@ -19,6 +19,40 @@
     min-height: 0;
 }
 
+.content-column-full {
+    grid-column: 1 / -1;
+}
+
+.demo-banner {
+    background: var(--accent-bg);
+    border-bottom: 0.5px solid var(--accent-border);
+    padding: 10px 24px;
+    font-size: 14px;
+    color: var(--text-h);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.demo-banner-btn {
+    background: none;
+    border: none;
+    color: var(--accent);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 0;
+    text-decoration: underline;
+}
+
+.app-demo {
+    grid-template-columns: 1fr;
+}
+
+.content-column-full {
+    grid-column: 1 / -1;
+}
+
 @media (max-width: 768px) {
     .app {
         grid-template-columns: 1fr;

@@ -12,7 +12,7 @@ export const useProblems = () => {
 
     const toSnakeCase = (form: FormType) => ({
         problem: form.problem,
-        problem_number: form.problemNumber ?? 0,
+        problem_number: form.problemNumber ? Number(form.problemNumber) : null,
         pattern: form.patterns,
         difficulty: form.difficulty,
         date: form.date,

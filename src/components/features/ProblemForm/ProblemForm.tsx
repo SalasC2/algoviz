@@ -64,7 +64,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
                     <label className="problem-label"> Problem Number </label>
                     <input
                         value={form.problemNumber ?? ""}
-                        onChange={(e) => setForm({ ...form, problemNumber: Number(e.target.value) })}
+                        onChange={(e) => setForm({ ...form, problemNumber: e.target.value })}
                     />
                 </div>
             </div>

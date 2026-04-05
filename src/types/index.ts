@@ -6,7 +6,7 @@ export type FormType = {
     patterns: string[],
     solved: boolean,
     date: string,
-    problemNumber?: number,
+    problemNumber?: string,
     difficulty?: "Easy" | "Medium" | "Hard",
     timeComplexity?: string,
     spaceComplexity?: string,
