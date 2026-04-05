@@ -1,6 +1,7 @@
 import "./Navbar.css";
 
-import { supabase } from "../../../utils/supabase";
+import { signInWithGoogle } from '../../../utils/supabase';
+import { signOut } from '../../../utils/supabase';
 import type { User } from "@supabase/supabase-js";
 import algovizIcon from '../../../assets/algoviz.png';
 
@@ -14,18 +15,6 @@ export const Navbar = ({ user }: NavbarProps) => {
 
     const userAvatar = user?.user_metadata.avatar_url ?? undefined;
 
-    const signInWithGoogle = async () => {
-        await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: window.location.origin
-            }
-        })
-    }
-
-    const signOut = async () => {
-        await supabase.auth.signOut();
-    }
     return (
         <div className="navbar">
             <div className="navbar-left">

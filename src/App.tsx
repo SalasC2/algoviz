@@ -1,6 +1,8 @@
 import './App.css'
 import { useState } from 'react';
 
+import { signInWithGoogle } from './utils/supabase';
+
 import { useProblems } from "./hooks/useProblem";
 import { useAuthUser } from './hooks/useAuthUser';
 
@@ -13,6 +15,8 @@ import { ProgressBar } from './components/features/ProgressCard/ProgressCard';
 import { SidePanel } from './components/layout/SidePanel/SidePanel';
 
 function App() {
+  const [isDemoMode, setIsDemoMode] = useState(false);
+
   const { grouped, handleSave, handleUpdate, handleDelete } = useProblems();
   const user = useAuthUser();
 
@@ -22,8 +26,13 @@ function App() {
   return (
     <>
       <Navbar user={user} />
-      {!user ? <Landing /> : (
+      {!user && !isDemoMode ? <Landing onDemo={() => setIsDemoMode(true)} /> : (
         <div className="app">
+          {isDemoMode && (
+            <div className="demo-banner">
+              Viewing demo — <button onClick={signInWithGoogle}>Sign in with Google</button> to track your own problems
+            </div>
+          )}
           <div className="form-column">
             <ProblemForm handleSave={handleSave} />
           </div>
