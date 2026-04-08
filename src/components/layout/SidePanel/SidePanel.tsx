@@ -3,7 +3,7 @@ import './SidePanel.css';
 
 import { DropdownSelect } from '../../ui/DropdownSelect/DropdownSelect';
 
-import { CORE_PATTERNS, ADVANCED_PATTERNS } from '../../../constants/patterns';
+import { CORE_PATTERNS } from '../../../constants/patterns';
 
 type SidePanelProps = {
     problem: any | null;
@@ -77,6 +77,7 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
 
         if (key === "patterns") {
             return (
+                <>
                 <DropdownSelect
                     options={CORE_PATTERNS}
                     value={editedProblem?.patterns ?? []}
@@ -87,6 +88,8 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
                     multiple={true}
                     placeholder="Select patterns"
                 />
+
+                </>
             )
         }
 
