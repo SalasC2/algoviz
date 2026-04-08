@@ -7,10 +7,12 @@ export const CORE_PATTERNS = [
   "Queue",
   "Linked List",
   "Tree",
+  "Graph",
+  "Heap",
 ]
 
 export const ADVANCED_PATTERNS = [
-  "Graph",
   "Dynamic Programming",
   "Backtracking",
+  "Greedy",
 ]

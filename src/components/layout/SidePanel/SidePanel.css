@@ -153,6 +153,12 @@ section p {
     line-height: 1.6;
 }
 
+.patterns-list {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
 .close-btn {
   background: none;
   border: none;

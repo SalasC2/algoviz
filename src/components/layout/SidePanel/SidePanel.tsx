@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 import './SidePanel.css';
 
+import { DropdownSelect } from '../../ui/DropdownSelect/DropdownSelect';
+
+import { CORE_PATTERNS, ADVANCED_PATTERNS } from '../../../constants/patterns';
+
 type SidePanelProps = {
     problem: any | null;
     onClose: () => void;
@@ -56,10 +60,33 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
                     }}
                     className={`edit-field ${isDirty ? 'edit-field-dirty' : ''}`}
                 >
+                    <DropdownSelect
+                        options={["Easy", "Medium", "Hard"]}
+                        value={editedProblem.difficulty}
+                        onChange={(difficulty) => {
+                            setEditedProblem({...editedProblem, difficulty})
+                            setDirtyFields(prev => new Set(prev).add('difficulty'))
+                        }}
+                    />
                     <option value="Easy">Easy</option>
                     <option value="Medium">Medium</option>
                     <option value="Hard">Hard</option>
                 </select>
+            )
+        }
+
+        if (key === "patterns") {
+            return (
+                <DropdownSelect
+                    options={CORE_PATTERNS}
+                    value={editedProblem?.patterns ?? []}
+                    onChange={(patterns) => {
+                        setEditedProblem({ ...editedProblem, patterns });
+                        setDirtyFields(prev => new Set(prev).add('patterns'));
+                    }}
+                    multiple={true}
+                    placeholder="Select patterns"
+                />
             )
         }
 
@@ -99,8 +126,14 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
 
                 <section>
                     <h4>Pattern</h4>
-                    {!isEditing && <p>{problem.pattern}</p>}
-                    {field("pattern")}
+                    {!isEditing && (
+                        <div className="patterns-list">
+                            {problem.patterns?.map((p: string) => (
+                                <span key={p} className="pattern-tag">{p}</span>
+                            ))}
+                        </div>
+                    )}
+                    {field("patterns")}
                 </section>
 
                 <section>

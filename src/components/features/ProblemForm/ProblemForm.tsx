@@ -96,7 +96,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
                 <div className="form-field">
                     <label className="problem-label"> Time Complexity </label>
                     <input
-                        value={form.timeComplexity}
+                        value={form.timeComplexity ?? ""}
                         onChange={(e) => setForm({ ...form, timeComplexity: e.target.value })}
                         placeholder={"Time Complexity"}
                     />
@@ -104,7 +104,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
                 <div className="form-field">
                     <label className="problem-label"> Space Complexity </label>
                     <input
-                        value={form.spaceComplexity}
+                        value={form.spaceComplexity ?? ""}
                         onChange={(e) => setForm({ ...form, spaceComplexity: e.target.value })}
                         placeholder={"Space Complexity"}
                     />
