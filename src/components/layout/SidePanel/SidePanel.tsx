@@ -3,7 +3,7 @@ import './SidePanel.css';
 
 import { DropdownSelect } from '../../ui/DropdownSelect/DropdownSelect';
 
-import { CORE_PATTERNS } from '../../../constants/patterns';
+import { CORE_PATTERNS, ADVANCED_PATTERNS } from "../../../constants/patterns";
 
 type SidePanelProps = {
     problem: any | null;
@@ -16,6 +16,8 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedProblem, setEditedProblem] = useState<any>(null);
     const [dirtyFields, setDirtyFields] = useState<Set<string>>(new Set());
+
+    const ALL_PATTERNS = [...CORE_PATTERNS, ...ADVANCED_PATTERNS];
 
     const getDifficultyBadgeClass = (difficulty: string) => {
         if (difficulty === "Easy") return "problem-difficulty-green";
@@ -78,16 +80,16 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
         if (key === "patterns") {
             return (
                 <>
-                <DropdownSelect
-                    options={CORE_PATTERNS}
-                    value={editedProblem?.patterns ?? []}
-                    onChange={(patterns) => {
-                        setEditedProblem({ ...editedProblem, patterns });
-                        setDirtyFields(prev => new Set(prev).add('patterns'));
-                    }}
-                    multiple={true}
-                    placeholder="Select patterns"
-                />
+                    <DropdownSelect
+                        options={ALL_PATTERNS}
+                        value={editedProblem?.patterns ?? []}
+                        onChange={(patterns) => {
+                            setEditedProblem({ ...editedProblem, patterns });
+                            setDirtyFields(prev => new Set(prev).add('patterns'));
+                        }}
+                        multiple={true}
+                        placeholder="Select patterns"
+                    />
 
                 </>
             )

@@ -1,0 +1,19 @@
+.icon-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--badge-gray);
+  cursor: pointer;
+  text-decoration: none;
+  transition: color 0.2s ease, opacity 0.2s ease;
+  font-size: 0.9rem;
+}
+
+.icon-link-btn:hover {
+  color: var(--primary);
+  opacity: 0.9;
+}
+
+.icon-link-text {
+  white-space: nowrap;
+}

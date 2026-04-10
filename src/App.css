@@ -53,6 +53,10 @@
     grid-column: 1 / -1;
 }
 
+.app-container > *:last-child {
+  margin-top: auto;
+}
+
 @media (max-width: 768px) {
     .app {
         grid-template-columns: 1fr;

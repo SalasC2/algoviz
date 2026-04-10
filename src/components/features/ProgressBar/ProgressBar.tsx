@@ -1,4 +1,4 @@
-import "./ProgressCard.css";
+import "./ProgressBar.css";
 import { CORE_PATTERNS } from "../../../constants/patterns";
 
 type ProgressBarProps = { 

@@ -4,7 +4,7 @@ import { Button } from "../../ui/Button"
 import { DropdownSelect } from '../../ui/DropdownSelect/DropdownSelect';
 
 import type { FormType } from "../../../types";
-import { CORE_PATTERNS } from "../../../constants/patterns";
+import { CORE_PATTERNS, ADVANCED_PATTERNS } from "../../../constants/patterns";
 
 import './ProblemForm.css';
 
@@ -25,6 +25,8 @@ export const ProblemForm = ({ handleSave }: Props) => {
         "trippedUp": "",
         "explanation": ""
     });
+
+    const ALL_PATTERNS = [...CORE_PATTERNS, ...ADVANCED_PATTERNS];
 
     const handleSubmit = () => {
         const formWithDate = { ...form, date: Date.now().toString() };
@@ -73,7 +75,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
                 <div className="form-field">
                     <label className="problem-label"> Pattern(s) <span className="required">*</span> </label>
                     <DropdownSelect
-                        options={CORE_PATTERNS}
+                        options={ALL_PATTERNS}
                         value={form.patterns}
                         onChange={(patterns) => setForm({ ...form, patterns })}
                         multiple={true}
