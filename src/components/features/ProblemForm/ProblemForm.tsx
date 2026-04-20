@@ -11,6 +11,7 @@ import './ProblemForm.css';
 type Props = {
     handleSave: (form: FormType) => void,
 }
+
 export const ProblemForm = ({ handleSave }: Props) => {
 
     let [form, setForm] = useState<FormType>({
