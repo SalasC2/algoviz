@@ -8,6 +8,8 @@ export const CORE_PATTERNS = [
   "Linked List",
   "Tree",
   "Graph",
+  "Graph DFS",
+  "Graph BFS",
   "Heap",
 ]
 
