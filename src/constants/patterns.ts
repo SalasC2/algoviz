@@ -7,7 +7,6 @@ export const CORE_PATTERNS = [
   "Queue",
   "Linked List",
   "Tree",
-  "Graph",
   "Graph DFS",
   "Graph BFS",
   "Heap",
