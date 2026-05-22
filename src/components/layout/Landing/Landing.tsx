@@ -1,6 +1,6 @@
 import "./Landing.css";
-
 import { signInWithGoogle } from '../../../utils/supabase';
+import { BetaSignup } from '../../ui/BetaSignup';
 
 type LandingProps = {
     onDemo: () => void;
@@ -18,15 +18,14 @@ export const Landing = ({ onDemo }: LandingProps) => {
                     AlgoViz closes that gap — log what tripped you, track which 
                     patterns you actually know, and see exactly where your blind spots are.
                 </p>
+                <span className="beta-badge">beta</span>
                 <div className="hero-actions">
-                    <button className="hero-cta" onClick={signInWithGoogle}>
-                        Get started with Google
-                    </button>
+                    <BetaSignup source="algoviz" onSignIn={signInWithGoogle} />
                     <button className="hero-demo" onClick={onDemo}>
                         View Demo
                     </button>
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};

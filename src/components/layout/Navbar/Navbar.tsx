@@ -28,9 +28,7 @@ export const Navbar = ({ user }: NavbarProps) => {
                         <img src={userAvatar} alt="user-avatar" className="user-avatar" />
                         <Button variant="danger" onClick={signOut}>Sign out</Button>
                     </>
-                ) : (
-                    <Button onClick={signInWithGoogle}>Sign in with Google</Button>
-                )}
+                ) : null}
             </div>
         </div>
     )

@@ -46,9 +46,14 @@
 }
 
 .hero-actions {
-    display: flex;
-    gap: 12px;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.beta-badge {
+  align-self: flex-start;
 }
 
 .hero-demo {
