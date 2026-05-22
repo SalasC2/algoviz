@@ -1,6 +1,5 @@
 import "./Navbar.css";
 
-import { signInWithGoogle } from '../../../utils/supabase';
 import { signOut } from '../../../utils/supabase';
 import type { User } from "@supabase/supabase-js";
 import algovizIcon from '../../../assets/algoviz.png';
