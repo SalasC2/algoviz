@@ -17,3 +17,16 @@ export const ADVANCED_PATTERNS = [
   "Backtracking",
   "Greedy",
 ]
+
+export const SOLVE_STATUSES = [
+  "Solved Cold", 
+  "Solved with Guidance", 
+  "Not Solved"
+];
+
+export const getSolveStatusShort = (status?: string) => {
+    if (status === "Solved Cold") return "Cold";
+    if (status === "Solved with Guidance") return "Guided";
+    if (status === "Not Solved") return "Unsolved";
+    return "";
+}

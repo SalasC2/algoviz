@@ -198,3 +198,30 @@ section p {
     color: var(--badge-red);
     border-color: var(--badge-red);
 }
+
+.solve-status-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 0.5px solid;
+    border-radius: 4px;
+    font-size: 11px;
+    padding: 2px 4px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.solve-status-green {
+    background-color: var(--badge-green-bg);
+    color: var(--badge-green);
+    border-color: var(--badge-green);
+}
+.solve-status-yellow {
+    background-color: var(--badge-yellow-bg);
+    color: var(--badge-yellow);
+    border-color: var(--badge-yellow);
+}
+.solve-status-red {
+    background-color: var(--badge-red-bg);
+    color: var(--badge-red);
+    border-color: var(--badge-red);
+}

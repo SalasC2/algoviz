@@ -4,7 +4,7 @@ import { Button } from "../../ui/Button"
 import { DropdownSelect } from '../../ui/DropdownSelect/DropdownSelect';
 
 import type { FormType } from "../../../types";
-import { CORE_PATTERNS, ADVANCED_PATTERNS } from "../../../constants/patterns";
+import { CORE_PATTERNS, ADVANCED_PATTERNS, SOLVE_STATUSES } from "../../../constants/patterns";
 
 import './ProblemForm.css';
 
@@ -18,6 +18,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
         "problem": "",
         "patterns": [],
         "solved": false,
+        "solveStatus": undefined,
         "date": "",
         "problemNumber": undefined,
         "difficulty": undefined,
@@ -72,7 +73,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
                 </div>
             </div>
 
-            <div className="form-row">
+            <div className="form-row-full">
                 <div className="form-field">
                     <label className="problem-label"> Pattern(s) <span className="required">*</span> </label>
                     <DropdownSelect
@@ -83,7 +84,9 @@ export const ProblemForm = ({ handleSave }: Props) => {
                         placeholder="Select patterns"
                     />
                 </div>
+            </div>
 
+            <div className="form-row">
                 <div className="form-field">
                     <label className="problem-label"> Difficulty <span className="required">*</span> </label>
                     <DropdownSelect
@@ -91,6 +94,15 @@ export const ProblemForm = ({ handleSave }: Props) => {
                         value={form.difficulty ?? ""}
                         onChange={(difficulty) => setForm({ ...form, difficulty })}
                         placeholder="Select difficulty"
+                    />
+                </div>
+                <div className="form-field">
+                    <label className="problem-label"> Solve Status </label>
+                    <DropdownSelect
+                        options={SOLVE_STATUSES}
+                        value={form.solveStatus ?? ""}
+                        onChange={(solveStatus) => setForm({ ...form, solveStatus })}
+                        placeholder="Select solve status"
                     />
                 </div>
             </div>

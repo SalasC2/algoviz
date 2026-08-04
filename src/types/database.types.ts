@@ -24,6 +24,7 @@ export type Database = {
           problem: string
           problem_number: number | null
           solved: boolean | null
+          solve_status: string | null
           space_complexity: string | null
           time_complexity: string | null
           tripped_up: string | null
@@ -38,6 +39,7 @@ export type Database = {
           problem?: string
           problem_number?: number | null
           solved?: boolean | null
+          solve_status?: string | null
           space_complexity?: string | null
           time_complexity?: string | null
           tripped_up?: string | null
@@ -52,6 +54,7 @@ export type Database = {
           problem?: string
           problem_number?: number | null
           solved?: boolean | null
+          solve_status?: string | null
           space_complexity?: string | null
           time_complexity?: string | null
           tripped_up?: string | null

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { IconButton } from "../../ui/IconButton";
 import './PatternCard.css';
 import type { FormType } from '../../../types';
+import { getSolveStatusShort } from '../../../constants/patterns';
 
 type Props = {
     pattern: string,
@@ -30,6 +31,13 @@ export const PatternCard = ({ pattern, problems, handleDelete, onSelectProblem }
         return "";
     }
 
+    const getSolveStatusBadgeClass = (status?: string) => {
+        if (status === "Solved Cold") return "solve-status-green";
+        if (status === "Solved with Guidance") return "solve-status-yellow";
+        if (status === "Not Solved") return "solve-status-red";
+        return "";
+    }
+
     return (
         <div className="pattern-card">
             <div className="pattern-card-header">
@@ -55,6 +63,11 @@ export const PatternCard = ({ pattern, problems, handleDelete, onSelectProblem }
                                         <span className={`pattern-difficulty ${getDifficultyBadgeClass(problemObj?.difficulty ?? "")}`}>
                                             {problemObj.difficulty}
                                         </span>
+                                        {problemObj.solveStatus && (
+                                            <span className={`solve-status-badge ${getSolveStatusBadgeClass(problemObj.solveStatus)}`}>
+                                                {getSolveStatusShort(problemObj.solveStatus)}
+                                            </span>
+                                        )}
                                         <span className="delete-btn">
                                             <IconButton onConfirm={() => handleDelete(problemObj.problem)} />
                                         </span>

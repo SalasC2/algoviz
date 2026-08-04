@@ -3,7 +3,7 @@ import './SidePanel.css';
 
 import { DropdownSelect } from '../../ui/DropdownSelect/DropdownSelect';
 
-import { CORE_PATTERNS, ADVANCED_PATTERNS } from "../../../constants/patterns";
+import { CORE_PATTERNS, ADVANCED_PATTERNS, SOLVE_STATUSES, getSolveStatusShort } from "../../../constants/patterns";
 
 type SidePanelProps = {
     problem: any | null;
@@ -23,6 +23,13 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
         if (difficulty === "Easy") return "problem-difficulty-green";
         if (difficulty === "Medium") return "problem-difficulty-yellow";
         if (difficulty === "Hard") return "problem-difficulty-red";
+        return "";
+    }
+
+    const getSolveStatusBadgeClass = (status?: string) => {
+        if (status === "Solved Cold") return "solve-status-green";
+        if (status === "Solved with Guidance") return "solve-status-yellow";
+        if (status === "Not Solved") return "solve-status-red";
         return "";
     }
 
@@ -66,7 +73,7 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
                         options={["Easy", "Medium", "Hard"]}
                         value={editedProblem.difficulty}
                         onChange={(difficulty) => {
-                            setEditedProblem({...editedProblem, difficulty})
+                            setEditedProblem({ ...editedProblem, difficulty })
                             setDirtyFields(prev => new Set(prev).add('difficulty'))
                         }}
                     />
@@ -74,6 +81,19 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
                     <option value="Medium">Medium</option>
                     <option value="Hard">Hard</option>
                 </select>
+            )
+        }
+
+        if (key === "solveStatus") {
+            return (
+                <DropdownSelect
+                    options={SOLVE_STATUSES}
+                    value={editedProblem?.solveStatus ?? ""}
+                    onChange={(solveStatus) => {
+                        setEditedProblem({ ...editedProblem, solveStatus });
+                        setDirtyFields(prev => new Set(prev).add('solveStatus'));
+                    }}
+                />
             )
         }
 
@@ -125,6 +145,11 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
                             {!isEditing && problem.difficulty}
                             {field("difficulty")}
                         </span>
+                        {!isEditing && problem.solveStatus && (
+                            <span className={`solve-status-badge ${getSolveStatusBadgeClass(problem.solveStatus)}`}>
+                                {getSolveStatusShort(problem.solveStatus)}
+                            </span>
+                        )}
                     </div>
                     <button className="close-btn" onClick={onClose}>✖</button>
                 </div>
@@ -139,6 +164,12 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
                         </div>
                     )}
                     {field("patterns")}
+                </section>
+
+                <section>
+                    <h4>Solve Status</h4>
+                    {!isEditing && <p>{problem.solveStatus || "Not tagged"}</p>}
+                    {field("solveStatus")}
                 </section>
 
                 <section>
