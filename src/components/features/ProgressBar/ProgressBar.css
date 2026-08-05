@@ -9,14 +9,21 @@
 .pattern-coverage {
     display: flex;
     align-items: center;
-    font-size: 20px;
-    color: var(--text-h);
-    margin: 20px 20px 20px 20px;
+    gap: 6px;
 }
+
 .pattern {
     display: flex;
     align-items: center;
     gap: 12px;
+    cursor: pointer;
+    padding: 4px 4px 4px 9px;
+    border-left: 3px solid transparent;
+    transition: border-color 0.15s ease;
+}
+
+.pattern:hover {
+    border-left-color: var(--accent);
 }
 
 .pattern-label {
@@ -54,9 +61,52 @@
     background-color : var(--badge-green);
 }
 
+.progress-track-tooltip {
+    flex: 1;
+}
+
 .progress-count {
     min-width: 120px;
-    font-size: 15px;
+    font-size: 12px;
     font-weight: 700;
-    
+    white-space: nowrap;
+    color: var(--text-h);
+}
+
+.breakdown-cold {
+    color: var(--badge-green);
+}
+
+.breakdown-guided {
+    color: var(--badge-yellow);
+}
+
+.breakdown-notsolved {
+    color: var(--badge-red);
+}
+
+.breakdown-untagged {
+    color: var(--badge-gray);
+}
+
+.info-icon {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 0.5px solid var(--border);
+    color: var(--text);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default;
+}
+
+.pattern-card-highlight {
+    animation: pattern-card-flash 1.3s ease;
+}
+
+@keyframes pattern-card-flash {
+    0% { background: var(--accent-bg); border-color: var(--accent-border); }
+    100% { background: var(--bg); border-color: var(--border); }
 }

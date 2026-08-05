@@ -39,7 +39,7 @@ export const PatternCard = ({ pattern, problems, handleDelete, onSelectProblem }
     }
 
     return (
-        <div className="pattern-card">
+        <div className="pattern-card" id={`pattern-card-${pattern.replace(/\s+/g, '-').toLowerCase()}`}>
             <div className="pattern-card-header">
                 <h3>{pattern}</h3>
                 <span className={`pattern-length ${getBadgeClass(problems.length)}`}>
