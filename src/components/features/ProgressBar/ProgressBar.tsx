@@ -1,5 +1,6 @@
+import { useState } from "react";
 import "./ProgressBar.css";
-import { CORE_PATTERNS } from "../../../constants/patterns";
+import { CORE_PATTERNS, ADVANCED_PATTERNS } from "../../../constants/patterns";
 import { Tooltip } from "../../ui/Tooltip";
 
 type ProgressBarProps = {
@@ -7,6 +8,8 @@ type ProgressBarProps = {
 }
 export const ProgressBar = ({ grouped }: ProgressBarProps) => {
     const CONFIDENT_TARGET = 10;
+    const MAX_DISPLAY = 8;
+    const [expanded, setExpanded] = useState(false);
 
     const getBadgeColor = (percent: number): string => {
         if (percent === 0) return "progress-fill-gray";
@@ -56,7 +59,10 @@ export const ProgressBar = ({ grouped }: ProgressBarProps) => {
         setTimeout(() => el.classList.remove('pattern-card-highlight'), 1200);
     }
 
-    const sorted = [...CORE_PATTERNS].sort((a, b) => calc(b) - calc(a));
+    const ALL_PATTERNS = [...CORE_PATTERNS, ...ADVANCED_PATTERNS];
+    const sorted = [...ALL_PATTERNS].sort((a, b) => calc(b) - calc(a));
+    const visible = expanded ? sorted : sorted.slice(0, MAX_DISPLAY);
+    const remaining = sorted.length - MAX_DISPLAY;
 
     return (
         <div className="progress-bar">
@@ -72,7 +78,7 @@ export const ProgressBar = ({ grouped }: ProgressBarProps) => {
                     <span className="info-icon">?</span>
                 </Tooltip>
             </div>
-            {sorted.map((pattern) => {
+            {visible.map((pattern) => {
                 const { cold } = getSolveBreakdown(pattern);
                 const total = calc(pattern);
                 const pct = Math.round(percentage(pattern));
@@ -93,6 +99,17 @@ export const ProgressBar = ({ grouped }: ProgressBarProps) => {
                     </div>
                 )
             })}
+
+            {remaining > 0 && !expanded && (
+                <p className="more-problems" onClick={() => setExpanded(true)}>
+                    +{remaining} more
+                </p>
+            )}
+            {expanded && sorted.length > MAX_DISPLAY && (
+                <p className="more-problems" onClick={() => setExpanded(false)}>
+                    Show less
+                </p>
+            )}
         </div>
     )
 }
