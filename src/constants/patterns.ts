@@ -9,13 +9,16 @@ export const CORE_PATTERNS = [
   "Tree",
   "Graph DFS",
   "Graph BFS",
-  "Heap",
+  "Heap"
 ]
 
 export const ADVANCED_PATTERNS = [
   "Dynamic Programming",
   "Backtracking",
   "Greedy",
+  "Union-Find",
+  "Topological Sort"
+
 ]
 
 export const SOLVE_STATUSES = [
