@@ -81,15 +81,15 @@ export const useProblems = () => {
         ));
     }
 
-    const handleDelete = async (problem: string) => {
+    const handleDelete = async (id: string) => {
         if (!user) return;
         const { error } = await supabase
             .from('problems')
             .delete()
-            .eq('problem', problem)
+            .eq('id', id)
             .eq('user_id', user.id);
         if (error) console.log(error);
-        else setData(prev => prev.filter((e: FormType) => e.problem !== problem));
+        else setData(prev => prev.filter((e: FormType) => e.id !== id));
     }
 
     const exportData = () => {

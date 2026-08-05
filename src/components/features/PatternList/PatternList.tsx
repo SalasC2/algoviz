@@ -4,7 +4,7 @@ import { CORE_PATTERNS, ADVANCED_PATTERNS } from "../../../constants/patterns";
 
 type Props = {
     grouped: Record<string, []>,
-    handleDelete: (pattern: string) => void;
+    handleDelete: (id: string) => void;
     onSelectProblem?: (problem: any) => void; // for side panel
 }
 

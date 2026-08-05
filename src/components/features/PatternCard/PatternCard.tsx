@@ -7,7 +7,7 @@ import { getSolveStatusShort } from '../../../constants/patterns';
 type Props = {
     pattern: string,
     problems: FormType[],
-    handleDelete: (problem: string) => void;
+    handleDelete: (id: string) => void;
     onSelectProblem?: (problem: FormType) => void; // for side panel
 }
 
@@ -69,7 +69,7 @@ export const PatternCard = ({ pattern, problems, handleDelete, onSelectProblem }
                                             </span>
                                         )}
                                         <span className="delete-btn">
-                                            <IconButton onConfirm={() => handleDelete(problemObj.problem)} />
+                                            <IconButton onConfirm={() => handleDelete(problemObj.id ?? "")} />
                                         </span>
                                     </div>
 
