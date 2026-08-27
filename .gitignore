@@ -13,6 +13,7 @@ dist-ssr
 *.local
 .env
 .env.local
+.claude/settings.local.json
 
 # Editor directories and files
 .vscode/*
@@ -27,3 +28,8 @@ dist-ssr
 
 # local
 supabase/
+
+CLAUDE.md
+
+# playwright snapshots
+.playwright-mcp
