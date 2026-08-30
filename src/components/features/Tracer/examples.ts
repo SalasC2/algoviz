@@ -16,6 +16,22 @@ export const TRACER_EXAMPLES: TracerExample[] = [
 }`,
   },
   {
+    label: "Two Sum (hashmap)",
+    entry: "twoSum",
+    args: "[[2,7,11,15], 9]",
+    code: `function twoSum(nums, target) {
+  const seen = new Map();
+  for (let i = 0; i < nums.length; i++) {
+    const complement = target - nums[i];
+    if (seen.has(complement)) {
+      return [seen.get(complement), i];
+    }
+    seen.set(nums[i], i);
+  }
+  return [];
+}`,
+  },
+  {
     label: "Grid DFS (island count)",
     entry: "countIslands",
     args: "[[[1,1,0],[0,1,0],[0,0,1]]]",
