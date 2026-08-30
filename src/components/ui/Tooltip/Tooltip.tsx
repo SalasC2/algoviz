@@ -9,7 +9,9 @@ type TooltipProps = {
 
 export const Tooltip = ({ content, children, className = '' }: TooltipProps) => {
     return (
-        <span className={`tooltip-wrapper ${className}`}>
+        // tabIndex makes this tappable-to-reveal on touch devices, not just
+        // hoverable — see .tooltip-wrapper:focus-within in Tooltip.css.
+        <span className={`tooltip-wrapper ${className}`} tabIndex={0}>
             {children}
             <span className="tooltip-panel">{content}</span>
         </span>

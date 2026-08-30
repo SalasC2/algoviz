@@ -10,6 +10,7 @@
     top: calc(100% + 6px);
     left: 0;
     width: 240px;
+    max-width: calc(100vw - 32px); /* don't overflow narrow viewports */
     background: var(--bg);
     border: 0.5px solid var(--border);
     border-radius: 8px;
@@ -23,7 +24,18 @@
     pointer-events: none;
 }
 
-.tooltip-wrapper:hover .tooltip-panel {
+.tooltip-wrapper:hover .tooltip-panel,
+.tooltip-wrapper:focus-within .tooltip-panel {
     visibility: visible;
     opacity: 1;
+}
+
+@media (max-width: 480px) {
+    .tooltip-panel {
+        /* on narrow screens, anchoring strictly to the trigger's left edge
+           can push this off the right side of the viewport — center it
+           under the trigger instead */
+        left: 50%;
+        transform: translateX(-50%);
+    }
 }
