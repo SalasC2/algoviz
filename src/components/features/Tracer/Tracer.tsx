@@ -6,6 +6,7 @@ import { ValueView } from "./ValueView";
 import { runTrace, listFunctionNames, snapValueToPlain, deepEqual } from "./interpreter/interpreter";
 import type { ConsoleLine, Snapshot } from "./interpreter/types";
 import { TRACER_EXAMPLES } from "./examples";
+import { ComponentRenderer } from "./ComponentRenderer";
 
 const PLAY_INTERVAL_MS = 500;
 
@@ -24,6 +25,34 @@ type TracerProps = {
 };
 
 export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) => {
+  const [mode, setMode] = useState<"function" | "component">("function");
+
+  return (
+    <div>
+      <div className="tracer-mode-toggle">
+        <button
+          className={`tracer-mode-btn ${mode === "function" ? "tracer-mode-btn-active" : ""}`}
+          onClick={() => setMode("function")}
+        >
+          Function
+        </button>
+        <button
+          className={`tracer-mode-btn ${mode === "component" ? "tracer-mode-btn-active" : ""}`}
+          onClick={() => setMode("component")}
+        >
+          Component
+        </button>
+      </div>
+      {mode === "function" ? (
+        <FunctionTracer initialCode={initialCode} onConsumeInitialCode={onConsumeInitialCode} />
+      ) : (
+        <ComponentRenderer />
+      )}
+    </div>
+  );
+};
+
+const FunctionTracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) => {
   const [code, setCode] = useState(initialCode || TRACER_EXAMPLES[0].code);
   const [entryName, setEntryName] = useState(TRACER_EXAMPLES[0].entry);
   const [argsText, setArgsText] = useState(TRACER_EXAMPLES[0].args);
