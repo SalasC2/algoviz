@@ -13,4 +13,5 @@ export type FormType = {
     spaceComplexity?: string,
     trippedUp: string,
     explanation: string,
+    code?: string,
 }

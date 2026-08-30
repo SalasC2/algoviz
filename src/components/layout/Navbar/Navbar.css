@@ -40,6 +40,22 @@
     }
 }
 
+@media (max-width: 480px) {
+    /* Journal/Visualizer is real navigation, not decorative — keep it
+       reachable by wrapping onto its own row instead of hiding it. */
+    .navbar {
+        flex-wrap: wrap;
+        height: auto;
+        row-gap: 8px;
+    }
+
+    .navbar-tabs {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 .navbar-right {
     flex: 1;
     display: flex;
@@ -51,6 +67,46 @@
     flex: 1;
     display: flex;
     justify-content: center;
+}
+
+.navbar-tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--code-bg);
+    border-radius: 10px;
+    padding: 4px;
+}
+
+.navbar-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.navbar-tab-active {
+    background: var(--bg);
+    color: var(--text-h);
+    box-shadow: var(--shadow);
+}
+
+.navbar-tab-beta {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--accent);
+    background: var(--accent-bg);
+    border: 1px solid var(--accent-border);
+    border-radius: 999px;
+    padding: 1px 6px;
 }
 
 .navbar-brand {

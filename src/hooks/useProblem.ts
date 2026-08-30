@@ -22,6 +22,7 @@ export const useProblems = () => {
         space_complexity: form.spaceComplexity ?? "",
         tripped_up: form.trippedUp ?? "",
         explanation: form.explanation,
+        code: form.code ?? null,
     })
 
     const fromSnakeCase = (row: any): FormType => ({
@@ -37,6 +38,7 @@ export const useProblems = () => {
         spaceComplexity: row.space_complexity,
         trippedUp: row.tripped_up,
         explanation: row.explanation,
+        code: row.code ?? undefined,
     })
 
     useEffect(() => {

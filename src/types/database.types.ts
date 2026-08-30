@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       problems: {
         Row: {
+          code: string | null
           date: string
           difficulty: string | null
           explanation: string
@@ -31,6 +32,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          code?: string | null
           date: string
           difficulty?: string | null
           explanation: string
@@ -46,6 +48,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          code?: string | null
           date?: string
           difficulty?: string | null
           explanation?: string

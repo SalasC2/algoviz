@@ -7,6 +7,7 @@ import { useAuthUser } from "./hooks/useAuthUser";
 import { signInWithGoogle } from "./utils/supabase";
 
 import { Navbar } from "./components/layout/Navbar";
+import type { NavView } from "./components/layout/Navbar";
 import { Landing } from "./components/layout/Landing";
 import { SidePanel } from "./components/layout/SidePanel";
 import { Footer } from "./components/layout/Footer";
@@ -14,12 +15,15 @@ import { Footer } from "./components/layout/Footer";
 import { ProblemForm } from "./components/features/ProblemForm";
 import { PatternList } from "./components/features/PatternList";
 import { ProgressBar } from "./components/features/ProgressBar";
+import { Tracer } from "./components/features/Tracer";
 
 import { DEMO_DATA } from "./constants/demoData";
 
 function App() {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState<any | null>(null);
+  const [activeView, setActiveView] = useState<NavView>("journal");
+  const [pendingTraceCode, setPendingTraceCode] = useState<string | null>(null);
 
   const { grouped, handleSave, handleUpdate, handleDelete } = useProblems();
   const user = useAuthUser();
@@ -37,11 +41,16 @@ function App() {
 
   return (
     <div className="app-container">
-      <Navbar user={user} />
+      <Navbar user={user} activeView={activeView} onChangeView={setActiveView} />
 
       <main className="main-content">
-        {/* Landing when not logged in and not in demo mode */}
-        {!user && !isDemoMode ? (
+        {activeView === "tracer" ? (
+          <Tracer
+            initialCode={pendingTraceCode}
+            onConsumeInitialCode={() => setPendingTraceCode(null)}
+          />
+        ) : !user && !isDemoMode ? (
+          /* Landing when not logged in and not in demo mode */
           <Landing onDemo={() => setIsDemoMode(true)} />
         ) : (
           <>
@@ -84,6 +93,10 @@ function App() {
               problem={selectedProblem}
               onClose={() => setSelectedProblem(null)}
               onUpdate={isDemoMode ? () => {} : handleUpdate}
+              onTrace={(code) => {
+                setPendingTraceCode(code);
+                setActiveView("tracer");
+              }}
             />
           </>
         )}
