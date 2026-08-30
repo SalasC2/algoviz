@@ -236,6 +236,44 @@ function snapshotValue(value: unknown, seen: Set<unknown> = new Set()): SnapValu
   return { kind: "primitive", value: String(value) };
 }
 
+// ---------- expected-output comparison (Phase 3) ----------
+
+// Converts a snapshotted return value back into a plain JS-ish structure
+// (arrays, plain objects, primitives — Maps/Sets become arrays since JSON,
+// the expected-output format, can't represent them either) for comparing
+// against a user-supplied "expected output" value.
+export function snapValueToPlain(v: SnapValue): unknown {
+  switch (v.kind) {
+    case "primitive":
+      return v.value;
+    case "function":
+      return `ƒ ${v.name}`;
+    case "array":
+      return v.items.map(snapValueToPlain);
+    case "set":
+      return v.items.map(snapValueToPlain);
+    case "map":
+      return v.entries.map(([k, val]) => [snapValueToPlain(k), snapValueToPlain(val)]);
+    case "object":
+      return Object.fromEntries(v.entries.map(([k, val]) => [k, snapValueToPlain(val)]));
+  }
+}
+
+export function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (typeof a === "number" && typeof b === "number" && Number.isNaN(a) && Number.isNaN(b)) return true;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    return a.length === b.length && a.every((v, i) => deepEqual(v, b[i]));
+  }
+  if (a && b && typeof a === "object" && typeof b === "object" && !Array.isArray(a) && !Array.isArray(b)) {
+    const aKeys = Object.keys(a as Record<string, unknown>);
+    const bKeys = Object.keys(b as Record<string, unknown>);
+    if (aKeys.length !== bKeys.length) return false;
+    return aKeys.every((k) => deepEqual((a as Record<string, unknown>)[k], (b as Record<string, unknown>)[k]));
+  }
+  return false;
+}
+
 function buildSnapshot(
   ctx: Ctx,
   line: number | null,

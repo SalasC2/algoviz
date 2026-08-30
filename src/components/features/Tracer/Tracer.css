@@ -88,6 +88,30 @@
   min-width: 260px;
 }
 
+.tracer-check {
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.tracer-check code {
+  font-weight: 400;
+}
+
+.tracer-check-pass {
+  border: 1px solid var(--badge-green);
+  background: var(--badge-green-bg);
+  color: var(--badge-green);
+}
+
+.tracer-check-fail {
+  border: 1px solid var(--badge-red);
+  background: var(--badge-red-bg);
+  color: var(--badge-red);
+  font-weight: 500;
+}
+
 .tracer-error {
   border: 1px solid var(--badge-red);
   background: var(--badge-red-bg);

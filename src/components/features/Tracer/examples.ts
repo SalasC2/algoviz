@@ -3,6 +3,7 @@ export type TracerExample = {
   code: string;
   entry: string;
   args: string; // JSON array, editable in the UI
+  expected?: string; // JSON value, optional — pre-fills the pass/fail check
 };
 
 export const TRACER_EXAMPLES: TracerExample[] = [
@@ -10,6 +11,7 @@ export const TRACER_EXAMPLES: TracerExample[] = [
     label: "Recursive Fibonacci",
     entry: "fib",
     args: "[5]",
+    expected: "5",
     code: `function fib(n) {
   if (n <= 1) return n;
   return fib(n - 1) + fib(n - 2);
@@ -19,6 +21,7 @@ export const TRACER_EXAMPLES: TracerExample[] = [
     label: "Two Sum (hashmap)",
     entry: "twoSum",
     args: "[[2,7,11,15], 9]",
+    expected: "[0, 1]",
     code: `function twoSum(nums, target) {
   const seen = new Map();
   for (let i = 0; i < nums.length; i++) {
@@ -35,6 +38,7 @@ export const TRACER_EXAMPLES: TracerExample[] = [
     label: "Grid DFS (island count)",
     entry: "countIslands",
     args: "[[[1,1,0],[0,1,0],[0,0,1]]]",
+    expected: "2",
     code: `function countIslands(grid) {
   const rows = grid.length;
   const cols = grid[0].length;

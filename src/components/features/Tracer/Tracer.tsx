@@ -3,11 +3,17 @@ import "./Tracer.css";
 
 import { Button } from "../../ui/Button";
 import { ValueView } from "./ValueView";
-import { runTrace, listFunctionNames } from "./interpreter/interpreter";
+import { runTrace, listFunctionNames, snapValueToPlain, deepEqual } from "./interpreter/interpreter";
 import type { ConsoleLine, Snapshot } from "./interpreter/types";
 import { TRACER_EXAMPLES } from "./examples";
 
 const PLAY_INTERVAL_MS = 500;
+
+type CheckResult =
+  | { kind: "pass" }
+  | { kind: "fail"; expected: unknown; actual: unknown }
+  | { kind: "invalid-json" }
+  | { kind: "no-return-value" };
 
 type TracerProps = {
   // Code handed off from a Journal problem's "Trace this" action. Consumed
@@ -21,12 +27,16 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
   const [code, setCode] = useState(initialCode || TRACER_EXAMPLES[0].code);
   const [entryName, setEntryName] = useState(TRACER_EXAMPLES[0].entry);
   const [argsText, setArgsText] = useState(TRACER_EXAMPLES[0].args);
+  const [expectedText, setExpectedText] = useState(TRACER_EXAMPLES[0].expected ?? "");
   const [availableFns, setAvailableFns] = useState<string[]>([TRACER_EXAMPLES[0].entry]);
+  const [checkResult, setCheckResult] = useState<CheckResult | null>(null);
 
   useEffect(() => {
     if (!initialCode) return;
     setCode(initialCode);
     setArgsText("[]");
+    setExpectedText("");
+    setCheckResult(null);
     setSnapshots([]);
     setTracedSource(null);
     setConsoleLines([]);
@@ -77,6 +87,8 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
     setCode(ex.code);
     setEntryName(ex.entry);
     setArgsText(ex.args);
+    setExpectedText(ex.expected ?? "");
+    setCheckResult(null);
     setSnapshots([]);
     setTracedSource(null);
     setConsoleLines([]);
@@ -87,6 +99,7 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
 
   const handleRun = () => {
     setIsPlaying(false);
+    setCheckResult(null);
     let args: unknown[];
     try {
       const parsed = JSON.parse(argsText || "[]");
@@ -103,6 +116,21 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
     setConsoleLines(result.consoleLines);
     setStepIndex(0);
     setRunError(result.error ?? null);
+
+    if (expectedText.trim()) {
+      const last = result.snapshots[result.snapshots.length - 1];
+      if (last?.status !== "done" || last.returnValue === undefined) {
+        setCheckResult({ kind: "no-return-value" });
+      } else {
+        try {
+          const expected = JSON.parse(expectedText);
+          const actual = snapValueToPlain(last.returnValue);
+          setCheckResult(deepEqual(actual, expected) ? { kind: "pass" } : { kind: "fail", expected, actual });
+        } catch {
+          setCheckResult({ kind: "invalid-json" });
+        }
+      }
+    }
   };
 
   const current = snapshots[stepIndex];
@@ -161,10 +189,31 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
             <input value={argsText} onChange={(e) => setArgsText(e.target.value)} placeholder="[5]" />
           </label>
 
+          <label className="tracer-field tracer-field-args">
+            <span>Expected output (optional)</span>
+            <input value={expectedText} onChange={(e) => setExpectedText(e.target.value)} placeholder="[0, 1]" />
+          </label>
+
           <Button onClick={handleRun}>Run</Button>
         </div>
 
         {runError && <div className="tracer-error">{runError}</div>}
+
+        {checkResult?.kind === "pass" && <div className="tracer-check tracer-check-pass">✓ Pass — matches expected output</div>}
+        {checkResult?.kind === "fail" && (
+          <div className="tracer-check tracer-check-fail">
+            ✗ Fail — expected <code>{JSON.stringify(checkResult.expected)}</code>, got{" "}
+            <code>{JSON.stringify(checkResult.actual)}</code>
+          </div>
+        )}
+        {checkResult?.kind === "invalid-json" && (
+          <div className="tracer-check tracer-check-fail">
+            Expected output isn't valid JSON — e.g. <code>[0, 1]</code> or <code>"done"</code>.
+          </div>
+        )}
+        {checkResult?.kind === "no-return-value" && (
+          <div className="tracer-check tracer-check-fail">Can't check expected output — the run didn't finish with a return value.</div>
+        )}
       </div>
 
       {snapshots.length > 0 && (
