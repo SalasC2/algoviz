@@ -174,12 +174,9 @@ const FunctionTracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {})
       <div className="tracer-intro">
         <h2>Execution Tracer</h2>
         <p>
-          Paste a self-contained JS or TS function (loops, recursion, arrays/objects/Maps/Sets, setTimeout/
-          setInterval, Promises and async/await — no classes or try/catch), run it, and step through what actually
-          happens. TS type annotations are stripped automatically. Timers and Promises are <strong>simulated</strong>
-          {" "}— no real wall-clock delay, just the correct event-loop ordering, so you can watch{" "}
-          <em>why</em> async code logs in the order it does. <strong>Proof of concept</strong> — separate from your
-          problem journal, nothing here is saved.
+          Paste a JS or TS function — loops, recursion, timers, Promises, async/await (no classes or try/catch) —
+          and step through it line by line. <strong>Proof of concept</strong>, separate from your journal; nothing
+          here is saved.
         </p>
       </div>
 

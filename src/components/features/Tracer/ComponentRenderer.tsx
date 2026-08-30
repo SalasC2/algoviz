@@ -87,11 +87,8 @@ export const ComponentRenderer = () => {
       <div className="tracer-intro">
         <h2>Component Renderer</h2>
         <p>
-          Paste a self-contained React component (JSX/TSX, hooks fine) named <code>App</code> — imports/exports are
-          stripped automatically, same as TS types elsewhere in this tool. It renders for real in an isolated
-          preview, and the result is fully interactive — click around like the real thing.{" "}
-          <strong>Not a step tracer</strong> — React's render/commit/effects model doesn't map to line-by-line
-          stepping the way a plain function does.
+          Paste a React component (JSX/TSX, hooks fine) named <code>App</code> and it renders for real, fully
+          interactive. <strong>Not a step tracer</strong> — React doesn't map to line-by-line stepping.
         </p>
       </div>
 
