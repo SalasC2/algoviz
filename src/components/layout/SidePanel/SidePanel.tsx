@@ -9,9 +9,10 @@ type SidePanelProps = {
     problem: any | null;
     onClose: () => void;
     onUpdate: (updated: any) => void;
+    onTrace?: (code: string) => void;
 };
 
-export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
+export const SidePanel = ({ problem, onClose, onUpdate, onTrace }: SidePanelProps) => {
     const [visible, setVisible] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedProblem, setEditedProblem] = useState<any>(null);
@@ -196,7 +197,20 @@ export const SidePanel = ({ problem, onClose, onUpdate }: SidePanelProps) => {
                     {field("spaceComplexity")}
                 </section>
 
+                <section>
+                    <h4>Code</h4>
+                    {!isEditing && (
+                        problem.code
+                            ? <pre className="problem-code-block">{problem.code}</pre>
+                            : <p>No code attached</p>
+                    )}
+                    {field("code", true)}
+                </section>
+
                 <div className="side-panel-actions">
+                    {!isEditing && problem.code && onTrace && (
+                        <button className="edit-btn" onClick={() => onTrace(problem.code)}>Trace this</button>
+                    )}
                     {!isEditing ? (
                         <button className="edit-btn" onClick={() => setIsEditing(true)}>Edit</button>
                     ) : (

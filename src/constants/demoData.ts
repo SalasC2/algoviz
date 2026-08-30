@@ -13,7 +13,18 @@ export const DEMO_DATA: FormType[] = [
         timeComplexity: 'O(n)',
         spaceComplexity: 'O(n)',
         trippedUp: 'Used of instead of in to get indices. Set obj[complement] = i instead of obj[nums[i]] = i. Switched to regular for loop because for let idx in nums returns string indices.',
-        explanation: 'Hashmap over two pointers because array isn\'t sorted and I prioritized O(n) time over O(1) space. Track complements as we iterate — if the complement exists in the map, we found our pair.'
+        explanation: 'Hashmap over two pointers because array isn\'t sorted and I prioritized O(n) time over O(1) space. Track complements as we iterate — if the complement exists in the map, we found our pair.',
+        code: `function twoSum(nums, target) {
+  const seen = new Map();
+  for (let i = 0; i < nums.length; i++) {
+    const complement = target - nums[i];
+    if (seen.has(complement)) {
+      return [seen.get(complement), i];
+    }
+    seen.set(nums[i], i);
+  }
+  return [];
+}`
     },
     {
         id: 'demo-2',

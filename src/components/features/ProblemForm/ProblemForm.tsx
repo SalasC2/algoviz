@@ -25,7 +25,8 @@ export const ProblemForm = ({ handleSave }: Props) => {
         "timeComplexity": undefined,
         "spaceComplexity": undefined,
         "trippedUp": "",
-        "explanation": ""
+        "explanation": "",
+        "code": undefined,
     });
 
     const ALL_PATTERNS = [...CORE_PATTERNS, ...ADVANCED_PATTERNS];
@@ -44,6 +45,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
             spaceComplexity: undefined,
             trippedUp: "",
             explanation: "",
+            code: undefined,
         });
     }
 
@@ -141,6 +143,18 @@ export const ProblemForm = ({ handleSave }: Props) => {
                         value={form.explanation}
                         onChange={(e) => setForm({ ...form, explanation: e.target.value })}
                         placeholder="Explain it simply"
+                    />
+                </div>
+            </div>
+
+            <div className="form-row-full">
+                <div className="form-field">
+                    <label className="problem-label"> Code <span className="optional">(optional — lets you "Trace this" in the Visualizer later)</span> </label>
+                    <textarea
+                        value={form.code ?? ""}
+                        onChange={(e) => setForm({ ...form, code: e.target.value || undefined })}
+                        placeholder="Paste the solution code you used, if you want to revisit it in the Visualizer"
+                        className="form-code-textarea"
                     />
                 </div>
             </div>

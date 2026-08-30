@@ -9,11 +9,37 @@ import { TRACER_EXAMPLES } from "./examples";
 
 const PLAY_INTERVAL_MS = 500;
 
-export const Tracer = () => {
-  const [code, setCode] = useState(TRACER_EXAMPLES[0].code);
+type TracerProps = {
+  // Code handed off from a Journal problem's "Trace this" action. Consumed
+  // once (on mount) so it doesn't keep overwriting the user's own edits if
+  // they navigate back to this tab later without a fresh handoff.
+  initialCode?: string | null;
+  onConsumeInitialCode?: () => void;
+};
+
+export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) => {
+  const [code, setCode] = useState(initialCode || TRACER_EXAMPLES[0].code);
   const [entryName, setEntryName] = useState(TRACER_EXAMPLES[0].entry);
   const [argsText, setArgsText] = useState(TRACER_EXAMPLES[0].args);
   const [availableFns, setAvailableFns] = useState<string[]>([TRACER_EXAMPLES[0].entry]);
+
+  useEffect(() => {
+    if (!initialCode) return;
+    setCode(initialCode);
+    setArgsText("[]");
+    setSnapshots([]);
+    setStepIndex(0);
+    setRunError(null);
+    setIsPlaying(false);
+    const { names } = listFunctionNames(initialCode);
+    if (names.length > 0) {
+      setAvailableFns(names);
+      setEntryName(names[0]);
+    }
+    onConsumeInitialCode?.();
+    // Only ever runs off a fresh handoff, not on every keystroke in this component.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialCode]);
 
   const [snapshots, setSnapshots] = useState<Snapshot[]>([]);
   const [stepIndex, setStepIndex] = useState(0);
