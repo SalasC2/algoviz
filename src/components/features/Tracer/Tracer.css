@@ -114,6 +114,12 @@
   color: var(--text);
 }
 
+.tracer-param-hint {
+  font-weight: 400;
+  opacity: 0.75;
+  font-family: var(--mono);
+}
+
 .tracer-field select,
 .tracer-field input {
   font-family: var(--mono);
