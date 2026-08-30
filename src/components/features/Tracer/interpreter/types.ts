@@ -26,6 +26,14 @@ export type Snapshot = {
   error?: string;
 };
 
+export type ConsoleLine = {
+  // Index into `snapshots` at the moment this line was logged — lets the UI
+  // show only the console lines that have "happened" as of the current step.
+  step: number;
+  level: "log" | "warn" | "error";
+  message: string;
+};
+
 export type TraceResult = {
   snapshots: Snapshot[];
   error?: string;
@@ -33,4 +41,5 @@ export type TraceResult = {
   // Line numbers in every Snapshot refer to this string, not the original
   // pasted input — display this, not the raw input, when highlighting lines.
   jsSource: string;
+  consoleLines: ConsoleLine[];
 };

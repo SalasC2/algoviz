@@ -4,7 +4,7 @@ import "./Tracer.css";
 import { Button } from "../../ui/Button";
 import { ValueView } from "./ValueView";
 import { runTrace, listFunctionNames } from "./interpreter/interpreter";
-import type { Snapshot } from "./interpreter/types";
+import type { ConsoleLine, Snapshot } from "./interpreter/types";
 import { TRACER_EXAMPLES } from "./examples";
 
 const PLAY_INTERVAL_MS = 500;
@@ -29,6 +29,7 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
     setArgsText("[]");
     setSnapshots([]);
     setTracedSource(null);
+    setConsoleLines([]);
     setStepIndex(0);
     setRunError(null);
     setIsPlaying(false);
@@ -50,6 +51,7 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
   // in every snapshot refer to this, not the raw `code` state, so this is
   // what the Source panel must display once a run has happened.
   const [tracedSource, setTracedSource] = useState<string | null>(null);
+  const [consoleLines, setConsoleLines] = useState<ConsoleLine[]>([]);
 
   useEffect(() => {
     const { names } = listFunctionNames(code);
@@ -77,6 +79,7 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
     setArgsText(ex.args);
     setSnapshots([]);
     setTracedSource(null);
+    setConsoleLines([]);
     setStepIndex(0);
     setRunError(null);
     setIsPlaying(false);
@@ -97,6 +100,7 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
     const result = runTrace(code, entryName, args);
     setSnapshots(result.snapshots);
     setTracedSource(result.jsSource);
+    setConsoleLines(result.consoleLines);
     setStepIndex(0);
     setRunError(result.error ?? null);
   };
@@ -113,10 +117,12 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
       <div className="tracer-intro">
         <h2>Execution Tracer</h2>
         <p>
-          Paste a self-contained JS or TS function (loops, recursion, arrays/objects/Maps/Sets — no async, classes,
-          or try/catch), run it, and step through what actually happens. TS type annotations are stripped
-          automatically. <strong>Proof of concept</strong> — separate from your problem journal, nothing here is
-          saved.
+          Paste a self-contained JS or TS function (loops, recursion, arrays/objects/Maps/Sets, setTimeout/
+          setInterval, Promises and async/await — no classes or try/catch), run it, and step through what actually
+          happens. TS type annotations are stripped automatically. Timers and Promises are <strong>simulated</strong>
+          {" "}— no real wall-clock delay, just the correct event-loop ordering, so you can watch{" "}
+          <em>why</em> async code logs in the order it does. <strong>Proof of concept</strong> — separate from your
+          problem journal, nothing here is saved.
         </p>
       </div>
 
@@ -247,6 +253,24 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
               </div>
             </div>
           </div>
+
+          {consoleLines.length > 0 && (
+            <div className="tracer-panel tracer-console-panel">
+              <h3>Console</h3>
+              <div className="tracer-console-lines">
+                {consoleLines
+                  .filter((line) => line.step <= stepIndex)
+                  .map((line, i) => (
+                    <div key={i} className={`tracer-console-line tracer-console-${line.level}`}>
+                      {line.message}
+                    </div>
+                  ))}
+                {consoleLines.filter((line) => line.step <= stepIndex).length === 0 && (
+                  <span className="val-empty">nothing logged yet</span>
+                )}
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

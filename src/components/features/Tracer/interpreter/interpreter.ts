@@ -1,15 +1,26 @@
 import * as acorn from "acorn";
-import type { Snapshot, SnapValue, TraceResult, FrameSnapshot } from "./types";
+import type { ConsoleLine, Snapshot, SnapValue, TraceResult, FrameSnapshot } from "./types";
 import { stripTypes } from "./transpile";
 
 // A deliberately small, sandboxed subset-of-JS interpreter for the Execution
 // Tracer proof of concept. It is NOT a general JS engine — see CLAUDE.md /
-// the tracer implementation brief for the exact scope boundaries (no async,
-// no classes, no try/catch, no import/require).
+// the tracer implementation brief for the exact scope boundaries (no classes,
+// no try/catch, no import/require).
 //
 // Simplification: each function call gets exactly one Scope (no per-block
 // scoping). This is intentionally loose vs. real JS block scoping — fine for
 // displaying LeetCode-style solution functions, not a spec-compliant engine.
+//
+// Async model (Phase 2): setTimeout/setInterval and Promises are simulated,
+// not real. There is no wall-clock timing — setTimeout just records a
+// (callback, delay) pair on a virtual macrotask queue, keyed by delay for
+// ordering only. Promise reactions go on a virtual microtask queue. After the
+// main script "completes," we drain microtasks fully, then take the single
+// earliest-queued macrotask, then drain microtasks again, repeating until
+// both queues are empty — mirroring the real event-loop ordering rule
+// (all microtasks before the next macrotask) without any real timing. The
+// point is to make *execution order* watchable step-by-step, not to be a
+// faithful timer implementation.
 
 export class InterpreterError extends Error {}
 class ReturnSignal {
@@ -41,8 +52,13 @@ const GLOBALS: Record<string, unknown> = {
 class Scope {
   vars = new Map<string, unknown>();
   parent: Scope | null;
-  constructor(parent: Scope | null) {
+  // Per-trace-run globals (setTimeout, Promise, ...) that need access to the
+  // current run's ctx. Set explicitly at each call's root scope; inherited
+  // down through child/closure scopes so any scope can resolve them.
+  ctx: Ctx | null;
+  constructor(parent: Scope | null, ctx: Ctx | null = null) {
     this.parent = parent;
+    this.ctx = ctx ?? parent?.ctx ?? null;
   }
 
   declare(name: string, value: unknown) {
@@ -66,6 +82,7 @@ function scopeChainHas(scope: Scope, name: string): boolean {
   for (let s: Scope | null = scope; s; s = s.parent) {
     if (s.vars.has(name)) return true;
   }
+  if (scope.ctx && name in scope.ctx.runtimeGlobals) return true;
   return name in GLOBALS;
 }
 
@@ -73,6 +90,7 @@ function scopeChainGet(scope: Scope, name: string): unknown {
   for (let s: Scope | null = scope; s; s = s.parent) {
     if (s.vars.has(name)) return s.vars.get(name);
   }
+  if (scope.ctx && name in scope.ctx.runtimeGlobals) return scope.ctx.runtimeGlobals[name];
   if (name in GLOBALS) return GLOBALS[name];
   throw new InterpreterError(`${name} is not defined`);
 }
@@ -87,7 +105,10 @@ function scopeChainSet(scope: Scope, name: string, value: unknown) {
   throw new InterpreterError(`${name} is not defined`);
 }
 
-type TracedFunction = {
+// Shape shared by named traced functions and ad hoc function-literal
+// callbacks (setTimeout/.then arguments) — anything callable through the
+// stepped interpreter.
+type CallableDescriptor = {
   name: string;
   params: any[]; // eslint-disable-line @typescript-eslint/no-explicit-any
   body: any; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -96,12 +117,38 @@ type TracedFunction = {
   endLine: number | null;
 };
 
+type TracedFunction = CallableDescriptor & {
+  isAsync: boolean;
+};
+
+// A function-literal argument to setTimeout/setInterval/.then/.catch,
+// captured as raw AST + closure scope (instead of being pre-evaluated to a
+// black-box closure) so its body can be stepped through when it eventually
+// fires. See evalSchedulingCall.
+type SteppableCallback = {
+  __steppableCallback: true;
+  node: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  scope: Scope;
+};
+
 type Frame = {
   id: number;
   functionName: string;
   scope: Scope;
   line: number | null;
   returning: boolean;
+};
+
+type Macrotask = {
+  id: number;
+  time: number;
+  seq: number;
+  run: () => Generator<unknown, unknown, unknown>;
+};
+
+type Microtask = {
+  seq: number;
+  run: () => Generator<unknown, unknown, unknown>;
 };
 
 type Ctx = {
@@ -115,6 +162,15 @@ type Ctx = {
   // an inner dfs/backtrack helper" pattern). Captured lazily, by reference,
   // the first time execution reaches the declaration statement.
   closureScopes: Map<string, Scope>;
+  // Simulated event loop (Phase 2) — see the file-level comment above.
+  macrotasks: Macrotask[];
+  microtasks: Microtask[];
+  nextTaskSeq: number;
+  virtualTime: number;
+  nextTimerId: number;
+  clearedTimers: Set<number>;
+  runtimeGlobals: Record<string, unknown>;
+  consoleLines: ConsoleLine[];
 };
 
 // ---------- value snapshotting (deep copy by value, for the scrubber) ----------
@@ -136,6 +192,29 @@ function snapshotValue(value: unknown, seen: Set<unknown> = new Set()): SnapValu
     return { kind: "primitive", value: "[Circular]" };
   }
   seen.add(value);
+  if (value instanceof Error) {
+    // Error's `message`/`stack` are non-enumerable, so the generic object
+    // branch below would otherwise render it as an empty object.
+    return {
+      kind: "object",
+      entries: [
+        ["name", snapshotValue(value.name, seen)],
+        ["message", snapshotValue(value.message, seen)],
+      ],
+    };
+  }
+  if (value instanceof VirtualPromise) {
+    // Never fall through to the generic object branch below — a
+    // VirtualPromise holds a reference to the whole run's ctx (functions
+    // map, call stack, etc.), which would otherwise get walked here.
+    return {
+      kind: "object",
+      entries: [
+        ["[[PromiseState]]", snapshotValue(value.state, seen)],
+        ["[[PromiseValue]]", value.state === "pending" ? snapshotValue(undefined, seen) : snapshotValue(value.value, seen)],
+      ],
+    };
+  }
   if (Array.isArray(value)) {
     return { kind: "array", items: value.map((v) => snapshotValue(v, seen)) };
   }
@@ -187,6 +266,227 @@ function* stepYield(ctx: Ctx, line: number | null) {
   }
   ctx.snapshots.push(buildSnapshot(ctx, line));
   yield;
+}
+
+// ---------- simulated Promises (Phase 2) ----------
+// A from-scratch minimal Promise/A+-ish implementation over the virtual
+// microtask queue, NOT the real Promise — real Promises resolve on real
+// microtasks with real timing, which would break the "run everything ahead
+// of time into a snapshot array" model this whole interpreter relies on.
+
+type Reaction = () => Generator<unknown, void, unknown>;
+
+class VirtualPromise {
+  ctx: Ctx;
+  state: "pending" | "fulfilled" | "rejected" = "pending";
+  value: unknown;
+  private reactions: Reaction[] = [];
+
+  constructor(ctx: Ctx) {
+    this.ctx = ctx;
+  }
+
+  static resolvedWith(ctx: Ctx, value: unknown): VirtualPromise {
+    const p = new VirtualPromise(ctx);
+    p._settle("fulfilled", value);
+    return p;
+  }
+
+  static rejectedWith(ctx: Ctx, err: unknown): VirtualPromise {
+    const p = new VirtualPromise(ctx);
+    p._settle("rejected", err);
+    return p;
+  }
+
+  _settle(state: "fulfilled" | "rejected", value: unknown) {
+    if (this.state !== "pending") return;
+    if (state === "fulfilled" && value instanceof VirtualPromise) {
+      // Adopt the inner promise's eventual outcome (thenable chaining).
+      value._addReaction(
+        (v) => this._settle("fulfilled", v),
+        (e) => this._settle("rejected", e)
+      );
+      return;
+    }
+    this.state = state;
+    this.value = value;
+    const pending = this.reactions;
+    this.reactions = [];
+    for (const reaction of pending) {
+      this.ctx.microtasks.push({ seq: this.ctx.nextTaskSeq++, run: reaction });
+    }
+  }
+
+  _pushPendingReaction(reaction: Reaction) {
+    this.reactions.push(reaction);
+  }
+
+  // Internal plumbing (await resumption, Promise.all bookkeeping) — plain
+  // callbacks, not user code, so they never need stepping themselves.
+  _addReaction(onFulfilled: (v: unknown) => void, onRejected: (e: unknown) => void) {
+    addInternalReaction(this, onFulfilled, onRejected);
+  }
+
+  then(onFulfilled?: unknown, onRejected?: unknown): VirtualPromise {
+    return addThenReaction(this, onFulfilled, onRejected);
+  }
+
+  catch(onRejected?: unknown): VirtualPromise {
+    return this.then(undefined, onRejected);
+  }
+}
+
+function addInternalReaction(promise: VirtualPromise, onFulfilled: (v: unknown) => void, onRejected: (e: unknown) => void) {
+  const reaction: Reaction = function* () {
+    if (promise.state === "fulfilled") onFulfilled(promise.value);
+    else onRejected(promise.value);
+    // eslint-disable-next-line no-constant-condition
+    if (false) yield; // keep this a generator (see Reaction/Microtask.run) without ever actually yielding
+  };
+  addReactionToPromise(promise, reaction);
+}
+
+function addThenReaction(promise: VirtualPromise, onFulfilled: unknown, onRejected: unknown): VirtualPromise {
+  const next = new VirtualPromise(promise.ctx);
+  const reaction: Reaction = function* () {
+    try {
+      if (promise.state === "fulfilled") {
+        if (onFulfilled === undefined) {
+          next._settle("fulfilled", promise.value);
+          return;
+        }
+        const result = yield* invokeCallback(onFulfilled, [promise.value], promise.ctx);
+        next._settle("fulfilled", result);
+      } else {
+        if (onRejected === undefined) {
+          next._settle("rejected", promise.value);
+          return;
+        }
+        const result = yield* invokeCallback(onRejected, [promise.value], promise.ctx);
+        next._settle("fulfilled", result);
+      }
+    } catch (e) {
+      next._settle("rejected", e);
+    }
+  };
+  addReactionToPromise(promise, reaction);
+  return next;
+}
+
+function addReactionToPromise(promise: VirtualPromise, reaction: Reaction) {
+  if (promise.state === "pending") {
+    promise._pushPendingReaction(reaction);
+  } else {
+    promise.ctx.microtasks.push({ seq: promise.ctx.nextTaskSeq++, run: reaction });
+  }
+}
+
+function promiseAll(ctx: Ctx, iterable: unknown): VirtualPromise {
+  const items = Array.from((iterable as Iterable<unknown>) ?? []);
+  const result = new VirtualPromise(ctx);
+  if (items.length === 0) {
+    result._settle("fulfilled", []);
+    return result;
+  }
+  const values = new Array(items.length);
+  let remaining = items.length;
+  items.forEach((item, i) => {
+    const p = item instanceof VirtualPromise ? item : VirtualPromise.resolvedWith(ctx, item);
+    p._addReaction(
+      (v) => {
+        values[i] = v;
+        remaining--;
+        if (remaining === 0) result._settle("fulfilled", values);
+      },
+      (e) => result._settle("rejected", e)
+    );
+  });
+  return result;
+}
+
+function formatConsoleArg(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value instanceof Error) return `${value.name}: ${value.message}`;
+  if (value instanceof VirtualPromise) return `Promise {${value.state}}`;
+  if (typeof value === "function") return `ƒ ${(value as { name?: string }).name || "anonymous"}`;
+  try {
+    const json = JSON.stringify(value, (_k, v) => (v instanceof Map ? Array.from(v.entries()) : v instanceof Set ? Array.from(v.values()) : v));
+    return json ?? String(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function makeConsole(ctx: Ctx, level: "log" | "warn" | "error") {
+  return (...args: unknown[]) => {
+    ctx.consoleLines.push({ step: ctx.snapshots.length, level, message: args.map(formatConsoleArg).join(" ") });
+  };
+}
+
+function makeRuntimeGlobals(ctx: Ctx): Record<string, unknown> {
+  const scheduleTimer = (isInterval: boolean) => (callbackValue: unknown, delayValue: unknown, ...extra: unknown[]) => {
+    const id = ctx.nextTimerId++;
+    const delay = typeof delayValue === "number" && Number.isFinite(delayValue) ? delayValue : 0;
+    const enqueue = (fireTime: number) => {
+      ctx.macrotasks.push({
+        id,
+        time: fireTime,
+        seq: ctx.nextTaskSeq++,
+        run: function* () {
+          if (ctx.clearedTimers.has(id)) return;
+          yield* invokeCallback(callbackValue, extra, ctx);
+          if (isInterval && !ctx.clearedTimers.has(id)) enqueue(ctx.virtualTime + delay);
+        },
+      });
+    };
+    enqueue(ctx.virtualTime + delay);
+    return id;
+  };
+
+  const clearTimer = (id: unknown) => {
+    if (typeof id === "number") ctx.clearedTimers.add(id);
+  };
+
+  return {
+    setTimeout: scheduleTimer(false),
+    setInterval: scheduleTimer(true),
+    clearTimeout: clearTimer,
+    clearInterval: clearTimer,
+    Promise: {
+      resolve: (v: unknown) => (v instanceof VirtualPromise ? v : VirtualPromise.resolvedWith(ctx, v)),
+      reject: (e: unknown) => VirtualPromise.rejectedWith(ctx, e),
+      all: (iterable: unknown) => promiseAll(ctx, iterable),
+    },
+    console: {
+      log: makeConsole(ctx, "log"),
+      warn: makeConsole(ctx, "warn"),
+      error: makeConsole(ctx, "error"),
+    },
+  };
+}
+
+// Runs macrotasks/microtasks to a fixed point: drain all microtasks, then
+// fire the single earliest-queued macrotask (by virtual delay, then
+// insertion order for ties), then drain microtasks again, repeating until
+// both queues are empty. This is what actually produces the "watch the real
+// execution order play out" behavior.
+function driveEventLoopToCompletion(ctx: Ctx) {
+  while (true) {
+    while (ctx.microtasks.length > 0) {
+      const task = ctx.microtasks.shift()!;
+      driveGeneratorToCompletion(task.run());
+    }
+    if (ctx.macrotasks.length === 0) break;
+    ctx.macrotasks.sort((a, b) => a.time - b.time || a.seq - b.seq);
+    const next = ctx.macrotasks.shift()!;
+    ctx.virtualTime = next.time;
+    driveGeneratorToCompletion(next.run());
+  }
+}
+
+function driveGeneratorToCompletion(gen: Generator<unknown, unknown, unknown>) {
+  let res = gen.next();
+  while (!res.done) res = gen.next();
 }
 
 // ---------- member access / operators (real JS semantics, real JS values) ----------
@@ -416,7 +716,7 @@ function evalSync(node: any, scope: Scope, ctx: Ctx): unknown { // eslint-disabl
     case "FunctionExpression":
       return makeSyncClosure(node, scope, ctx);
     case "NewExpression":
-      return evalNew(node, (n) => evalSync(n, scope, ctx));
+      return evalNew(node, (n) => evalSync(n, scope, ctx), ctx);
     case "SequenceExpression": {
       let last: unknown;
       for (const e of node.expressions) last = evalSync(e, scope, ctx);
@@ -514,14 +814,34 @@ function makeSyncClosure(node: any, defScope: Scope, ctx: Ctx): (...args: unknow
   };
 }
 
-function evalNew(node: any, evalOne: (n: any) => unknown): unknown { // eslint-disable-line @typescript-eslint/no-explicit-any
+function evalNew(node: any, evalOne: (n: any) => unknown, ctx: Ctx): unknown { // eslint-disable-line @typescript-eslint/no-explicit-any
   const name = node.callee.name;
+  if (name === "Promise") {
+    // Black-box path (reached from evalSync, e.g. `new Promise(...)` inside
+    // a .map() callback) — the executor just runs synchronously, not
+    // stepped. The main stepped path intercepts `new Promise` earlier, in
+    // evalExprGen, so its executor CAN be stepped — see evalNewPromiseStepped.
+    const promise = new VirtualPromise(ctx);
+    const resolve = (v: unknown) => promise._settle("fulfilled", v);
+    const reject = (e: unknown) => promise._settle("rejected", e);
+    try {
+      const executor = evalOne(node.arguments[0]) as (...a: unknown[]) => unknown;
+      executor(resolve, reject);
+    } catch (e) {
+      reject(e);
+    }
+    return promise;
+  }
   const args = evalArgs(node.arguments, evalOne);
   if (name === "Map") return new Map(args[0] as Iterable<[unknown, unknown]> | undefined);
   if (name === "Set") return new Set(args[0] as Iterable<unknown> | undefined);
   if (name === "Array") {
     if (args.length === 1 && typeof args[0] === "number") return new Array(args[0]).fill(undefined);
     return args;
+  }
+  if (name === "Error" || name === "TypeError" || name === "RangeError") {
+    const ErrorCtor = name === "TypeError" ? TypeError : name === "RangeError" ? RangeError : Error;
+    return new ErrorCtor(typeof args[0] === "string" ? args[0] : undefined);
   }
   throw new InterpreterError(`Unsupported constructor: new ${name}(...)`);
 }
@@ -612,6 +932,13 @@ function* evalExprGen(node: any, scope: Scope, ctx: Ctx, frame: Frame): Generato
       return getMember(obj, prop);
     }
     case "CallExpression": {
+      // setTimeout/setInterval/.then/.catch get their function-literal
+      // arguments captured as steppable descriptors instead of black-box
+      // closures, so callbacks fired later can still be watched step by step.
+      const schedulingKind = detectSchedulingCall(node);
+      if (schedulingKind) {
+        return yield* evalSchedulingCall(node, schedulingKind, scope, ctx, frame);
+      }
       // Recursive/self calls into another top-level function defined in the
       // pasted snippet get stepped through with their own stack frame.
       if (node.callee.type === "Identifier" && ctx.functions.has(node.callee.name) && !scope.has(node.callee.name)) {
@@ -623,7 +950,10 @@ function* evalExprGen(node: any, scope: Scope, ctx: Ctx, frame: Frame): Generato
             args.push(yield* evalExprGen(a, scope, ctx, frame));
           }
         }
-        return yield* callUserFunction(ctx.functions.get(node.callee.name)!, args, ctx);
+        const fnDescriptor = ctx.functions.get(node.callee.name)!;
+        const callResult = callUserFunction(fnDescriptor, args, ctx);
+        if (fnDescriptor.isAsync) return callResult as VirtualPromise;
+        return yield* (callResult as Generator<unknown, unknown, unknown>);
       }
       // Everything else (built-ins, array/string/Map/Set methods, callbacks)
       // runs as a black box — not stepped into.
@@ -653,15 +983,118 @@ function* evalExprGen(node: any, scope: Scope, ctx: Ctx, frame: Frame): Generato
     case "FunctionExpression":
       return makeSyncClosure(node, scope, ctx);
     case "NewExpression":
-      return evalNew(node, (n) => evalSync(n, scope, ctx));
+      if (node.callee.name === "Promise") {
+        return yield* evalNewPromiseStepped(node, scope, ctx, frame);
+      }
+      return evalNew(node, (n) => evalSync(n, scope, ctx), ctx);
     case "SequenceExpression": {
       let last: unknown;
       for (const e of node.expressions) last = yield* evalExprGen(e, scope, ctx, frame);
       return last;
     }
+    case "AwaitExpression": {
+      const awaited = yield* evalExprGen(node.argument, scope, ctx, frame);
+      // Suspends the enclosing async function (see stepAsyncGen) until the
+      // awaited value settles; resumes with whatever value/error it's
+      // called back with next.
+      const resumeValue = yield { __await: awaited };
+      return resumeValue;
+    }
     default:
       throw new InterpreterError(`Unsupported expression: ${node.type}`);
   }
+}
+
+// `new Promise(executor)` reached through the stepped path — the executor
+// runs stepped (with its own frame) if it's a literal function/arrow, same
+// treatment as setTimeout/.then callbacks.
+function* evalNewPromiseStepped(node: any, scope: Scope, ctx: Ctx, frame: Frame): Generator<unknown, unknown, unknown> { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const promise = new VirtualPromise(ctx);
+  const resolve = (v: unknown) => promise._settle("fulfilled", v);
+  const reject = (e: unknown) => promise._settle("rejected", e);
+  const executorNode = node.arguments[0];
+  try {
+    if (executorNode && (executorNode.type === "ArrowFunctionExpression" || executorNode.type === "FunctionExpression")) {
+      const descriptor: CallableDescriptor = {
+        name: "(promise executor)",
+        params: executorNode.params,
+        body: executorNode.body,
+        isExpressionBody: executorNode.type === "ArrowFunctionExpression" && executorNode.expression === true,
+        startLine: executorNode.loc?.start.line ?? null,
+        endLine: executorNode.loc?.end.line ?? null,
+      };
+      const execFrame = setupCall(descriptor, scope, [resolve, reject], ctx);
+      yield* fullCallGen(descriptor, execFrame, ctx);
+    } else {
+      const fn = (yield* evalExprGen(executorNode, scope, ctx, frame)) as (...a: unknown[]) => unknown;
+      fn(resolve, reject);
+    }
+  } catch (e) {
+    reject(e);
+  }
+  return promise;
+}
+
+// Detects setTimeout/setInterval/.then/.catch call sites so their literal
+// function-argument(s) can be captured as steppable descriptors instead of
+// pre-evaluated to black-box closures.
+function detectSchedulingCall(node: any): "setTimeout" | "setInterval" | "then" | "catch" | null { // eslint-disable-line @typescript-eslint/no-explicit-any
+  if (node.callee.type === "Identifier" && (node.callee.name === "setTimeout" || node.callee.name === "setInterval")) {
+    return node.callee.name;
+  }
+  if (node.callee.type === "MemberExpression" && !node.callee.computed) {
+    const prop = node.callee.property.name;
+    if (prop === "then" || prop === "catch") return prop;
+  }
+  return null;
+}
+
+function* evalSchedulingCall(
+  node: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+  kind: "setTimeout" | "setInterval" | "then" | "catch",
+  scope: Scope,
+  ctx: Ctx,
+  frame: Frame
+): Generator<unknown, unknown, unknown> {
+  function* captureArg(argNode: any): Generator<unknown, unknown, unknown> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    if (!argNode) return undefined;
+    if (argNode.type === "ArrowFunctionExpression" || argNode.type === "FunctionExpression") {
+      const cb: SteppableCallback = { __steppableCallback: true, node: argNode, scope };
+      return cb;
+    }
+    return yield* evalExprGen(argNode, scope, ctx, frame);
+  }
+
+  if (kind === "setTimeout" || kind === "setInterval") {
+    const callbackArg = yield* captureArg(node.arguments[0]);
+    const delayArg = node.arguments[1] ? yield* evalExprGen(node.arguments[1], scope, ctx, frame) : 0;
+    const extraArgs: unknown[] = [];
+    for (let i = 2; i < node.arguments.length; i++) {
+      extraArgs.push(yield* evalExprGen(node.arguments[i], scope, ctx, frame));
+    }
+    const scheduler = ctx.runtimeGlobals[kind] as (...a: unknown[]) => unknown;
+    return scheduler(callbackArg, delayArg, ...extraArgs);
+  }
+
+  // kind === "then" | "catch"
+  const receiver = yield* evalExprGen(node.callee.object, scope, ctx, frame);
+  if (!(receiver instanceof VirtualPromise)) {
+    // Not actually one of our promises (e.g. an unrelated object that
+    // happens to have a `.then`-named method) — fall back to a plain call
+    // so a clear error surfaces if it's not really callable.
+    const fn = getMember(receiver, kind);
+    const args: unknown[] = [];
+    for (const a of node.arguments) args.push(yield* captureArg(a));
+    if (typeof fn !== "function") throw new InterpreterError(`${kind} is not a function`);
+    return (fn as (...a: unknown[]) => unknown).apply(receiver, args);
+  }
+  if (kind === "catch") {
+    const onRejected = yield* captureArg(node.arguments[0]);
+    return receiver.catch(onRejected);
+  }
+  const onFulfilled = yield* captureArg(node.arguments[0]);
+  const onRejected = yield* captureArg(node.arguments[1]);
+  return receiver.then(onFulfilled, onRejected);
 }
 
 function* assignToGen(target: any, value: unknown, scope: Scope, ctx: Ctx, frame: Frame) { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -802,29 +1235,42 @@ function* execStmtGen(node: any, scope: Scope, ctx: Ctx, frame: Frame): Generato
   }
 }
 
-function* callUserFunction(fn: TracedFunction, args: unknown[], ctx: Ctx): Generator<unknown, unknown, unknown> {
+// Sets up a call's scope/frame and pushes it onto the call stack. Shared by
+// named traced functions and ad hoc callback descriptors alike.
+function setupCall(descriptor: CallableDescriptor, parentScope: Scope | null, args: unknown[], ctx: Ctx): Frame {
   if (ctx.callStack.length > 500) {
     throw new InterpreterError("Call stack too deep — possible infinite recursion.");
   }
-  const parentScope = ctx.closureScopes.get(fn.name) ?? null;
-  const scope = new Scope(parentScope);
-  bindArgsToParams(fn.params, args, scope, ctx);
+  const scope = new Scope(parentScope, ctx);
+  bindArgsToParams(descriptor.params, args, scope, ctx);
   const frame: Frame = {
     id: ctx.nextFrameId++,
-    functionName: fn.name,
+    functionName: descriptor.name,
     scope,
-    line: fn.startLine,
+    line: descriptor.startLine,
     returning: false,
   };
   ctx.callStack.push(frame);
+  return frame;
+}
+
+// The actual stepped execution of a call, from entry to pop. Used both by
+// the ordinary (yield*-driven) sync path and, for async functions, driven
+// manually step-by-step by stepAsyncGen so it can suspend at `await`.
+function* fullCallGen(
+  descriptor: CallableDescriptor,
+  frame: Frame,
+  ctx: Ctx
+): Generator<unknown, unknown, unknown> {
+  const scope = frame.scope;
   yield* stepYield(ctx, frame.line);
 
   let returnValue: unknown;
   try {
-    if (fn.isExpressionBody) {
-      returnValue = yield* evalExprGen(fn.body, scope, ctx, frame);
+    if (descriptor.isExpressionBody) {
+      returnValue = yield* evalExprGen(descriptor.body, scope, ctx, frame);
     } else {
-      yield* execBlockGen(fn.body, scope, ctx, frame);
+      yield* execBlockGen(descriptor.body, scope, ctx, frame);
     }
   } catch (sig) {
     if (sig instanceof ReturnSignal) returnValue = sig.value;
@@ -832,12 +1278,104 @@ function* callUserFunction(fn: TracedFunction, args: unknown[], ctx: Ctx): Gener
   }
 
   frame.returning = true;
-  frame.line = fn.endLine ?? frame.line;
+  frame.line = descriptor.endLine ?? frame.line;
   yield* stepYield(ctx, frame.line);
   ctx.callStack.pop();
   const callerLine = ctx.callStack.length ? ctx.callStack[ctx.callStack.length - 1].line : null;
   yield* stepYield(ctx, callerLine);
   return returnValue;
+}
+
+// Manually drives an async function/callback's body generator, suspending
+// at each `await` (see the AwaitExpression case in evalExprGen, which yields
+// a { __await } sentinel distinct from stepYield's plain yields) by
+// registering the rest of the function as a promise reaction, instead of
+// blocking the caller. This is what makes `callUserFunction`/`invokeCallback`
+// return a (possibly still-pending) promise immediately for async functions,
+// matching real async-function call semantics.
+function stepAsyncGen(
+  bodyGen: Generator<unknown, unknown, unknown>,
+  ctx: Ctx,
+  resultPromise: VirtualPromise,
+  resume?: { type: "next"; value: unknown } | { type: "throw"; error: unknown }
+) {
+  let res: IteratorResult<unknown, unknown>;
+  try {
+    res = resume?.type === "throw" ? bodyGen.throw(resume.error) : bodyGen.next(resume?.value);
+  } catch (e) {
+    resultPromise._settle("rejected", e);
+    return;
+  }
+  while (true) {
+    if (res.done) {
+      resultPromise._settle("fulfilled", res.value);
+      return;
+    }
+    const y = res.value as { __await?: unknown } | undefined;
+    if (y && typeof y === "object" && "__await" in y) {
+      const awaitedRaw = y.__await;
+      const awaitedPromise = awaitedRaw instanceof VirtualPromise ? awaitedRaw : VirtualPromise.resolvedWith(ctx, awaitedRaw);
+      awaitedPromise._addReaction(
+        (v) => stepAsyncGen(bodyGen, ctx, resultPromise, { type: "next", value: v }),
+        (e) => stepAsyncGen(bodyGen, ctx, resultPromise, { type: "throw", error: e })
+      );
+      return;
+    }
+    try {
+      res = bodyGen.next();
+    } catch (e) {
+      resultPromise._settle("rejected", e);
+      return;
+    }
+  }
+}
+
+function callUserFunction(fn: TracedFunction, args: unknown[], ctx: Ctx): Generator<unknown, unknown, unknown> | VirtualPromise {
+  const parentScope = ctx.closureScopes.get(fn.name) ?? null;
+  const frame = setupCall(fn, parentScope, args, ctx);
+  const bodyGen = fullCallGen(fn, frame, ctx);
+  if (fn.isAsync) {
+    const promise = new VirtualPromise(ctx);
+    stepAsyncGen(bodyGen, ctx, promise);
+    return promise;
+  }
+  return bodyGen;
+}
+
+function describeAnonymousFunction(node: any): string { // eslint-disable-line @typescript-eslint/no-explicit-any
+  return node.id?.name ? node.id.name : "(anonymous)";
+}
+
+// Calls a callback that may be either a real JS function (native callbacks,
+// or a reference to a previously-defined function — run as a black box) or a
+// SteppableCallback descriptor (a function-literal argument to
+// setTimeout/.then/etc. — run through the stepped interpreter instead, with
+// its own stack frame).
+function* invokeCallback(callbackValue: unknown, args: unknown[], ctx: Ctx): Generator<unknown, unknown, unknown> {
+  if (callbackValue === undefined || callbackValue === null) return undefined;
+  if (typeof callbackValue === "object" && (callbackValue as SteppableCallback).__steppableCallback) {
+    const { node, scope: closureScope } = callbackValue as SteppableCallback;
+    const descriptor: CallableDescriptor = {
+      name: describeAnonymousFunction(node),
+      params: node.params,
+      body: node.body,
+      isExpressionBody: node.type === "ArrowFunctionExpression" && node.expression === true,
+      startLine: node.loc?.start.line ?? null,
+      endLine: node.loc?.end.line ?? null,
+    };
+    const frame = setupCall(descriptor, closureScope, args, ctx);
+    const bodyGen = fullCallGen(descriptor, frame, ctx);
+    if (node.async) {
+      const promise = new VirtualPromise(ctx);
+      stepAsyncGen(bodyGen, ctx, promise);
+      return promise;
+    }
+    return yield* bodyGen;
+  }
+  if (typeof callbackValue === "function") {
+    return (callbackValue as (...a: unknown[]) => unknown)(...args);
+  }
+  throw new InterpreterError("Attempted to call a non-function value");
 }
 
 // ---------- parsing / entry points ----------
@@ -850,6 +1388,7 @@ function toTracedFunction(name: string, node: any): TracedFunction { // eslint-d
     isExpressionBody: node.type === "ArrowFunctionExpression" && node.expression === true,
     startLine: node.loc?.start.line ?? null,
     endLine: node.loc?.end.line ?? null,
+    isAsync: Boolean(node.async),
   };
 }
 
@@ -925,14 +1464,14 @@ export function runTrace(code: string, entryName: string, args: unknown[]): Trac
   try {
     ast = acorn.parse(jsSource, { ecmaVersion: 2020, locations: true, sourceType: "script" });
   } catch (e) {
-    return { snapshots: [], jsSource, error: `Syntax error: ${e instanceof Error ? e.message : String(e)}` };
+    return { snapshots: [], jsSource, consoleLines: [], error: `Syntax error: ${e instanceof Error ? e.message : String(e)}` };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const functions = extractFunctions(ast as any);
   const entry = functions.get(entryName);
   if (!entry) {
-    return { snapshots: [], jsSource, error: `Function "${entryName}" not found in pasted code.` };
+    return { snapshots: [], jsSource, consoleLines: [], error: `Function "${entryName}" not found in pasted code.` };
   }
 
   const ctx: Ctx = {
@@ -942,17 +1481,51 @@ export function runTrace(code: string, entryName: string, args: unknown[]): Trac
     stepsRemaining: MAX_STEPS,
     nextFrameId: 0,
     closureScopes: new Map(),
+    macrotasks: [],
+    microtasks: [],
+    nextTaskSeq: 0,
+    virtualTime: 0,
+    nextTimerId: 1,
+    clearedTimers: new Set(),
+    runtimeGlobals: {},
+    consoleLines: [],
   };
+  ctx.runtimeGlobals = makeRuntimeGlobals(ctx);
 
   try {
-    const gen = callUserFunction(entry, args, ctx);
-    let res = gen.next();
-    while (!res.done) res = gen.next();
-    ctx.snapshots.push(buildSnapshot(ctx, null, "done", res.value));
-    return { snapshots: ctx.snapshots, jsSource };
+    const callResult = callUserFunction(entry, args, ctx);
+    let finalValue: unknown;
+    if (entry.isAsync) {
+      const promise = callResult as VirtualPromise;
+      driveEventLoopToCompletion(ctx);
+      if (promise.state === "rejected") {
+        throw promise.value;
+      }
+      if (promise.state === "pending") {
+        ctx.snapshots.push(
+          buildSnapshot(
+            ctx,
+            null,
+            "error",
+            undefined,
+            "The traced async function never resolved — it's still awaiting something that never settled."
+          )
+        );
+        return { snapshots: ctx.snapshots, jsSource, consoleLines: ctx.consoleLines, error: "Async function never resolved." };
+      }
+      finalValue = promise.value;
+    } else {
+      const gen = callResult as Generator<unknown, unknown, unknown>;
+      let res = gen.next();
+      while (!res.done) res = gen.next();
+      driveEventLoopToCompletion(ctx);
+      finalValue = res.value;
+    }
+    ctx.snapshots.push(buildSnapshot(ctx, null, "done", finalValue));
+    return { snapshots: ctx.snapshots, jsSource, consoleLines: ctx.consoleLines };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     ctx.snapshots.push(buildSnapshot(ctx, null, "error", undefined, msg));
-    return { snapshots: ctx.snapshots, jsSource, error: msg };
+    return { snapshots: ctx.snapshots, jsSource, consoleLines: ctx.consoleLines, error: msg };
   }
 }

@@ -217,6 +217,35 @@
   white-space: nowrap;
 }
 
+.tracer-console-panel {
+  font-family: var(--mono);
+}
+
+.tracer-console-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tracer-console-line {
+  font-size: 13px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--code-bg);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.tracer-console-warn {
+  background: var(--badge-yellow-bg);
+  color: var(--badge-yellow);
+}
+
+.tracer-console-error {
+  background: var(--badge-red-bg);
+  color: var(--badge-red);
+}
+
 /* value rendering */
 
 .val-empty {

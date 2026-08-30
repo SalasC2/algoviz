@@ -65,4 +65,57 @@ export const TRACER_EXAMPLES: TracerExample[] = [
   return count;
 }`,
   },
+  {
+    label: "Log order (async)",
+    entry: "run",
+    args: "[]",
+    code: `function run() {
+  console.log("A: sync");
+  setTimeout(() => console.log("B: setTimeout"), 0);
+  Promise.resolve().then(() => console.log("C: promise .then"));
+  console.log("D: sync");
+  return "done";
+}`,
+  },
+  {
+    label: "Debounce",
+    entry: "run",
+    args: "[]",
+    code: `function debounce(fn, delay) {
+  let timeoutId;
+  return function (...args) {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => fn(...args), delay);
+  };
+}
+
+function run() {
+  const calls = [];
+  const debounced = debounce((x) => calls.push(x), 100);
+
+  debounced(1);
+  debounced(2);
+  debounced(3); // only this one should ever actually fire
+
+  return calls;
+}`,
+  },
+  {
+    label: "Async/await ordering",
+    entry: "run",
+    args: "[]",
+    code: `async function fetchValue() {
+  console.log("fetch: start");
+  await null;
+  console.log("fetch: end");
+  return 42;
+}
+
+async function run() {
+  console.log("run: start");
+  const value = await fetchValue();
+  console.log("run: got " + value);
+  return value;
+}`,
+  },
 ];
