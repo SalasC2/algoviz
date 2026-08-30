@@ -115,8 +115,12 @@
 }
 
 .tracer-param-hint {
+  font-size: 12px;
   font-weight: 400;
   opacity: 0.75;
+}
+
+.tracer-param-hint code {
   font-family: var(--mono);
 }
 

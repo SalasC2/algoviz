@@ -1494,30 +1494,6 @@ export function listFunctionNames(code: string): { names: string[]; error?: stri
   }
 }
 
-function describeParam(p: any): string { // eslint-disable-line @typescript-eslint/no-explicit-any
-  if (p.type === "Identifier") return p.name;
-  if (p.type === "AssignmentPattern") return describeParam(p.left);
-  if (p.type === "RestElement") return `...${describeParam(p.argument)}`;
-  if (p.type === "ArrayPattern") return `[${p.elements.map((e: any) => (e ? describeParam(e) : "")).join(", ")}]`; // eslint-disable-line @typescript-eslint/no-explicit-any
-  if (p.type === "ObjectPattern") return "{...}";
-  return "arg";
-}
-
-// Used to hint what a function's Arguments field should contain — e.g. a
-// "Trace this" handoff from the Journal brings code but no sample inputs,
-// so the field starts empty and the only way to know what's expected
-// otherwise is reading the source.
-export function getFunctionParamNames(code: string, entryName: string): string[] {
-  try {
-    const jsSource = stripTypes(code);
-    const ast: any = acorn.parse(jsSource, { ecmaVersion: 2020, locations: true, sourceType: "script" }); // eslint-disable-line @typescript-eslint/no-explicit-any
-    const fn = extractFunctions(ast).get(entryName);
-    return fn ? fn.params.map(describeParam) : [];
-  } catch {
-    return [];
-  }
-}
-
 const MAX_STEPS = 20000;
 
 export function runTrace(code: string, entryName: string, args: unknown[]): TraceResult {

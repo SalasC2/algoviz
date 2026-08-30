@@ -3,7 +3,8 @@ import "./Tracer.css";
 
 import { Button } from "../../ui/Button";
 import { ValueView } from "./ValueView";
-import { runTrace, listFunctionNames, getFunctionParamNames, snapValueToPlain, deepEqual } from "./interpreter/interpreter";
+import { runTrace, listFunctionNames, snapValueToPlain, deepEqual } from "./interpreter/interpreter";
+import { getFunctionParamHints } from "./interpreter/transpile";
 import type { ConsoleLine, Snapshot } from "./interpreter/types";
 import { TRACER_EXAMPLES } from "./examples";
 import { ComponentRenderer } from "./ComponentRenderer";
@@ -165,7 +166,8 @@ const FunctionTracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {})
   const current = snapshots[stepIndex];
   const lines = useMemo(() => (tracedSource ?? code).split("\n"), [tracedSource, code]);
   const topFrame = current?.stack[current.stack.length - 1];
-  const paramNames = useMemo(() => getFunctionParamNames(code, entryName), [code, entryName]);
+  const paramHints = useMemo(() => getFunctionParamHints(code, entryName), [code, entryName]);
+  const paramNames = useMemo(() => paramHints.map((p) => p.name), [paramHints]);
 
   const canStepBack = stepIndex > 0;
   const canStepForward = stepIndex < snapshots.length - 1;
@@ -212,11 +214,23 @@ const FunctionTracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {})
           </label>
 
           <label className="tracer-field tracer-field-args">
-            <span>
-              Arguments (JSON array)
-              {paramNames.length > 0 && <span className="tracer-param-hint"> — expects: {paramNames.join(", ")}</span>}
-            </span>
-            <input value={argsText} onChange={(e) => setArgsText(e.target.value)} placeholder="[5]" />
+            <span>Arguments (JSON array)</span>
+            <input
+              value={argsText}
+              onChange={(e) => setArgsText(e.target.value)}
+              placeholder={paramNames.length > 0 ? `[${paramNames.join(", ")}]` : "[5]"}
+            />
+            {paramNames.length > 0 && (
+              <span className="tracer-param-hint">
+                One array holding all values in order, not separate fields — e.g. <code>[[1,2,3], "abc", 9]</code>.
+                {paramHints.some((p) => p.type) && (
+                  <>
+                    {" "}
+                    Params: {paramHints.map((p) => (p.type ? `${p.name}: ${p.type}` : p.name)).join(", ")}.
+                  </>
+                )}
+              </span>
+            )}
           </label>
 
           <label className="tracer-field tracer-field-args">
