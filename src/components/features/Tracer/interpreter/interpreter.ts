@@ -1,5 +1,6 @@
 import * as acorn from "acorn";
 import type { Snapshot, SnapValue, TraceResult, FrameSnapshot } from "./types";
+import { stripTypes } from "./transpile";
 
 // A deliberately small, sandboxed subset-of-JS interpreter for the Execution
 // Tracer proof of concept. It is NOT a general JS engine — see CLAUDE.md /
@@ -891,7 +892,8 @@ function extractFunctions(program: any): Map<string, TracedFunction> { // eslint
 // outer function is actually running.
 export function listFunctionNames(code: string): { names: string[]; error?: string } {
   try {
-    const ast: any = acorn.parse(code, { ecmaVersion: 2020, locations: true, sourceType: "script" }); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const jsSource = stripTypes(code);
+    const ast: any = acorn.parse(jsSource, { ecmaVersion: 2020, locations: true, sourceType: "script" }); // eslint-disable-line @typescript-eslint/no-explicit-any
     const functions = extractFunctions(ast);
     const topLevel = new Set<string>();
     for (const stmt of ast.body) {
@@ -918,18 +920,19 @@ export function listFunctionNames(code: string): { names: string[]; error?: stri
 const MAX_STEPS = 20000;
 
 export function runTrace(code: string, entryName: string, args: unknown[]): TraceResult {
+  const jsSource = stripTypes(code);
   let ast;
   try {
-    ast = acorn.parse(code, { ecmaVersion: 2020, locations: true, sourceType: "script" });
+    ast = acorn.parse(jsSource, { ecmaVersion: 2020, locations: true, sourceType: "script" });
   } catch (e) {
-    return { snapshots: [], error: `Syntax error: ${e instanceof Error ? e.message : String(e)}` };
+    return { snapshots: [], jsSource, error: `Syntax error: ${e instanceof Error ? e.message : String(e)}` };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const functions = extractFunctions(ast as any);
   const entry = functions.get(entryName);
   if (!entry) {
-    return { snapshots: [], error: `Function "${entryName}" not found in pasted code.` };
+    return { snapshots: [], jsSource, error: `Function "${entryName}" not found in pasted code.` };
   }
 
   const ctx: Ctx = {
@@ -946,10 +949,10 @@ export function runTrace(code: string, entryName: string, args: unknown[]): Trac
     let res = gen.next();
     while (!res.done) res = gen.next();
     ctx.snapshots.push(buildSnapshot(ctx, null, "done", res.value));
-    return { snapshots: ctx.snapshots };
+    return { snapshots: ctx.snapshots, jsSource };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     ctx.snapshots.push(buildSnapshot(ctx, null, "error", undefined, msg));
-    return { snapshots: ctx.snapshots, error: msg };
+    return { snapshots: ctx.snapshots, jsSource, error: msg };
   }
 }

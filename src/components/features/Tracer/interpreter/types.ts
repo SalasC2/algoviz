@@ -29,4 +29,8 @@ export type Snapshot = {
 export type TraceResult = {
   snapshots: Snapshot[];
   error?: string;
+  // The plain-JS source actually parsed/executed (post TS-type-stripping).
+  // Line numbers in every Snapshot refer to this string, not the original
+  // pasted input — display this, not the raw input, when highlighting lines.
+  jsSource: string;
 };

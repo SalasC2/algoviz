@@ -28,6 +28,7 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
     setCode(initialCode);
     setArgsText("[]");
     setSnapshots([]);
+    setTracedSource(null);
     setStepIndex(0);
     setRunError(null);
     setIsPlaying(false);
@@ -45,6 +46,10 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
   const [stepIndex, setStepIndex] = useState(0);
   const [runError, setRunError] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  // The plain-JS source actually executed (TS types stripped) — line numbers
+  // in every snapshot refer to this, not the raw `code` state, so this is
+  // what the Source panel must display once a run has happened.
+  const [tracedSource, setTracedSource] = useState<string | null>(null);
 
   useEffect(() => {
     const { names } = listFunctionNames(code);
@@ -71,6 +76,7 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
     setEntryName(ex.entry);
     setArgsText(ex.args);
     setSnapshots([]);
+    setTracedSource(null);
     setStepIndex(0);
     setRunError(null);
     setIsPlaying(false);
@@ -90,12 +96,13 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
 
     const result = runTrace(code, entryName, args);
     setSnapshots(result.snapshots);
+    setTracedSource(result.jsSource);
     setStepIndex(0);
     setRunError(result.error ?? null);
   };
 
   const current = snapshots[stepIndex];
-  const lines = useMemo(() => code.split("\n"), [code]);
+  const lines = useMemo(() => (tracedSource ?? code).split("\n"), [tracedSource, code]);
   const topFrame = current?.stack[current.stack.length - 1];
 
   const canStepBack = stepIndex > 0;
@@ -106,9 +113,10 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
       <div className="tracer-intro">
         <h2>Execution Tracer</h2>
         <p>
-          Paste a self-contained JS function (loops, recursion, arrays/objects/Maps/Sets — no async, classes, or
-          try/catch), run it, and step through what actually happens.{" "}
-          <strong>Proof of concept</strong> — separate from your problem journal, nothing here is saved.
+          Paste a self-contained JS or TS function (loops, recursion, arrays/objects/Maps/Sets — no async, classes,
+          or try/catch), run it, and step through what actually happens. TS type annotations are stripped
+          automatically. <strong>Proof of concept</strong> — separate from your problem journal, nothing here is
+          saved.
         </p>
       </div>
 
@@ -186,7 +194,12 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
 
           <div className="tracer-view">
             <div className="tracer-panel tracer-source-panel">
-              <h3>Source</h3>
+              <h3>
+                Source
+                {tracedSource !== null && tracedSource !== code && (
+                  <span className="tracer-source-note"> — TS types stripped for execution</span>
+                )}
+              </h3>
               <pre className="tracer-source">
                 {lines.map((line, i) => (
                   <div key={i} className={`tracer-source-line ${current?.line === i + 1 ? "tracer-line-active" : ""}`}>
