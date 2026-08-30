@@ -35,19 +35,22 @@
 .side-panel {
     position: fixed;
     top: 0;
-    right: -400px; /* start offscreen */
+    right: 0;
     width: 400px;
+    max-width: 100%; /* don't overflow narrow viewports */
     height: 100vh;
     background: var(--bg);
     box-shadow: -4px 0 16px rgba(0,0,0,0.1);
     padding: 20px;
     overflow-y: auto;
+    overflow-x: hidden;
     z-index: 1000;
-    transition: right 0.3s ease;
+    transform: translateX(100%); /* start offscreen, works at any width */
+    transition: transform 0.3s ease;
 }
 
 .side-panel.visible {
-    right: 0; /* slide in */
+    transform: translateX(0); /* slide in */
 }
 
 .side-panel-actions {
