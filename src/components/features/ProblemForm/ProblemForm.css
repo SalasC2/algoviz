@@ -109,6 +109,6 @@
 
 @media (max-width: 600px) {
     .form-row {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: 1fr;
     }
 }

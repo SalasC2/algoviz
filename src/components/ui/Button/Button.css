@@ -1,6 +1,7 @@
 .btn {
     /* shape */
     padding: 8px 14px;
+    min-height: 44px;
     border-radius: 6px;
     border: none;
 

@@ -93,6 +93,7 @@ input.edit-field {
 
 .edit-btn, .save-btn, .cancel-btn {
     padding: 6px 14px;
+    min-height: 44px;
     border-radius: 6px;
     border: none;
     cursor: pointer;
@@ -168,6 +169,11 @@ section p {
   font-size: 1.2rem;
   cursor: pointer;
   color: var(--text);
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .close-btn:hover {

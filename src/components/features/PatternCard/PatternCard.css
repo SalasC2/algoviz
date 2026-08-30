@@ -163,9 +163,10 @@
     display: block;
     width: 100%;
     margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    /* This only renders once the card is already expanded (user opted into
+       more detail) and isn't clickable to reveal more like problem-name is
+       — truncating here with no way to read the rest was a dead end. */
+    white-space: normal;
     font-size: 12px;
     color: var(--text);
 }

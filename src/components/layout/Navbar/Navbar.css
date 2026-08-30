@@ -1,26 +1,43 @@
 .navbar {
     display: flex;
     height: 72px;
-    padding: 4px 24px;
+    padding: 12px 24px;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 24px;
     border-bottom: 0.5px solid var(--border);
     background: var(--bg);
     position: sticky;
     top: 0;
     z-index: 10;
+    gap: 12px;
 }
 
 .algoviz-logo {
-    height: 128px;
+    /* fit the navbar's own content height (72px - 12px top/bottom padding),
+       not the raw asset's portrait dimensions */
+    height: 48px;
     width: auto;
+    flex-shrink: 0;
 }
 
 .navbar-left {
     display: flex;
     align-items: center;
     gap: 8px;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.navbar-left p {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+    .navbar-left p {
+        display: none; /* tagline is decorative copy, not lost functionality */
+    }
 }
 
 .navbar-right {

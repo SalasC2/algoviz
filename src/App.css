@@ -68,4 +68,13 @@
       overflow-y: visible;
       height: auto;
     }
+
+    /* Sticky only makes sense in the two-column desktop layout (form
+       pinned in its own column while the pattern list scrolls beside it).
+       Stacked single-column on mobile, it pins the form over the pattern
+       list for the whole scroll range instead. */
+    .form-column {
+      position: static;
+      top: auto;
+    }
 }
