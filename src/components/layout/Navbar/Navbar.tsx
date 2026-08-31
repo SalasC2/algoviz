@@ -5,6 +5,7 @@ import type { User } from "@supabase/supabase-js";
 import algovizIcon from '../../../assets/algoviz.png';
 
 import { Button } from "../../ui/Button"
+import { useTheme } from "../../../hooks/useTheme"
 
 export type NavView = "journal" | "tracer";
 
@@ -17,6 +18,7 @@ type NavbarProps = {
 export const Navbar = ({ user, activeView = "journal", onChangeView }: NavbarProps) => {
 
     const userAvatar = user?.user_metadata.avatar_url ?? undefined;
+    const { theme, toggle } = useTheme();
 
     return (
         <div className="navbar">
@@ -42,6 +44,14 @@ export const Navbar = ({ user, activeView = "journal", onChangeView }: NavbarPro
                 </div>
             )}
             <div className="navbar-right">
+                <button
+                    className="navbar-theme-btn"
+                    onClick={toggle}
+                    aria-label="Toggle theme"
+                    title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                    {theme === 'dark' ? '☀' : '◑'}
+                </button>
                 {user ? (
                     <>
                         <img src={userAvatar} alt="user-avatar" className="user-avatar" />
