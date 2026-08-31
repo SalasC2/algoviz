@@ -4,6 +4,7 @@
     min-height: 44px;
     border-radius: 6px;
     border: none;
+    white-space: nowrap;
 
     /* feel */
     cursor: pointer;

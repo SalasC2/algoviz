@@ -25,6 +25,14 @@ export const Navbar = ({ user, activeView = "journal", onChangeView }: NavbarPro
             <div className="navbar-left">
                 <img className="algoviz-logo" src={algovizIcon} />
                 <span className="navbar-brand">AlgoViz</span>
+                <button
+                    className="navbar-theme-btn"
+                    onClick={toggle}
+                    aria-label="Toggle theme"
+                    title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
+                >
+                    {theme === 'dark' ? '☀' : '◑'}
+                </button>
                 <p> Track your LeetCode patterns. Build real intuition. </p>
             </div>
             {onChangeView && (
@@ -44,14 +52,6 @@ export const Navbar = ({ user, activeView = "journal", onChangeView }: NavbarPro
                 </div>
             )}
             <div className="navbar-right">
-                <button
-                    className="navbar-theme-btn"
-                    onClick={toggle}
-                    aria-label="Toggle theme"
-                    title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-                >
-                    {theme === 'dark' ? '☀' : '◑'}
-                </button>
                 {user ? (
                     <>
                         <img src={userAvatar} alt="user-avatar" className="user-avatar" />
