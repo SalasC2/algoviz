@@ -90,7 +90,7 @@ export const useProblems = () => {
             .delete()
             .eq('id', id)
             .eq('user_id', user.id);
-        if (error) console.log(error);
+        if (error) console.error(error);
         else setData(prev => prev.filter((e: FormType) => e.id !== id));
     }
 
