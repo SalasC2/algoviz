@@ -32,6 +32,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
 
     const [rating, setRating] = useState<number | null>(null);
     const [difficultySource, setDifficultySource] = useState<"auto" | "manual" | null>(null);
+    const [nameSource, setNameSource] = useState<"auto" | "manual" | null>(null);
 
     useEffect(() => {
         const lcNumber = Number(form.problemNumber);
@@ -57,21 +58,29 @@ export const ProblemForm = ({ handleSave }: Props) => {
                 setRating(data?.rating ?? null);
             });
 
-        if (difficultySource !== "manual") {
+        if (difficultySource !== "manual" || nameSource !== "manual") {
             supabase
                 .from('leetcode_difficulty')
-                .select('difficulty')
+                .select('title, difficulty')
                 .eq('lc_number', lcNumber)
                 .maybeSingle()
                 .then(({ data, error }) => {
                     if (cancelled) return;
                     if (error) {
-                        console.error('Failed to look up LeetCode difficulty', error);
+                        console.error('Failed to look up LeetCode problem metadata', error);
                         return;
                     }
-                    const difficulty = data?.difficulty as FormType["difficulty"] | undefined;
-                    setForm((f) => ({ ...f, difficulty }));
-                    setDifficultySource(difficulty ? "auto" : null);
+
+                    if (difficultySource !== "manual") {
+                        const difficulty = data?.difficulty as FormType["difficulty"] | undefined;
+                        setForm((f) => ({ ...f, difficulty }));
+                        setDifficultySource(difficulty ? "auto" : null);
+                    }
+
+                    if (nameSource !== "manual") {
+                        setForm((f) => ({ ...f, problem: data?.title ?? "" }));
+                        setNameSource(data?.title ? "auto" : null);
+                    }
                 });
         }
 
@@ -97,6 +106,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
             code: undefined,
         });
         setDifficultySource(null);
+        setNameSource(null);
     }
 
     const isDisabled = (): boolean => {
@@ -113,7 +123,10 @@ export const ProblemForm = ({ handleSave }: Props) => {
                     <label className="problem-label"> Problem Name <span className="required">*</span> </label>
                     <input
                         value={form.problem}
-                        onChange={(e) => setForm({ ...form, problem: e.target.value })}
+                        onChange={(e) => {
+                            setNameSource("manual");
+                            setForm({ ...form, problem: e.target.value });
+                        }}
                     />
                 </div>
                 <div className="form-field">
