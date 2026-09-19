@@ -33,3 +33,4 @@ CLAUDE.md
 
 # playwright snapshots
 .playwright-mcp
+.vercel
