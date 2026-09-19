@@ -23,6 +23,7 @@ export const useProblems = () => {
         tripped_up: form.trippedUp ?? "",
         explanation: form.explanation,
         code: form.code ?? null,
+        trace_args: form.traceArgs ?? null,
     })
 
     const fromSnakeCase = (row: any): FormType => ({
@@ -39,6 +40,7 @@ export const useProblems = () => {
         trippedUp: row.tripped_up,
         explanation: row.explanation,
         code: row.code ?? undefined,
+        traceArgs: row.trace_args ?? undefined,
     })
 
     useEffect(() => {

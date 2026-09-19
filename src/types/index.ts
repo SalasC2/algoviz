@@ -14,4 +14,5 @@ export type FormType = {
     trippedUp: string,
     explanation: string,
     code?: string,
+    traceArgs?: string,
 }

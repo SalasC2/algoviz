@@ -9,7 +9,7 @@ type SidePanelProps = {
     problem: any | null;
     onClose: () => void;
     onUpdate: (updated: any) => void;
-    onTrace?: (code: string) => void;
+    onTrace?: (code: string, traceArgs?: string) => void;
 };
 
 export const SidePanel = ({ problem, onClose, onUpdate, onTrace }: SidePanelProps) => {
@@ -209,7 +209,7 @@ export const SidePanel = ({ problem, onClose, onUpdate, onTrace }: SidePanelProp
 
                 <div className="side-panel-actions">
                     {!isEditing && problem.code && onTrace && (
-                        <button className="edit-btn" onClick={() => onTrace(problem.code)}>Trace this</button>
+                        <button className="edit-btn" onClick={() => onTrace(problem.code, problem.traceArgs)}>Trace this</button>
                     )}
                     {!isEditing ? (
                         <button className="edit-btn" onClick={() => setIsEditing(true)}>Edit</button>

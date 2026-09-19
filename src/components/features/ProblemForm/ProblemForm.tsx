@@ -104,6 +104,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
             trippedUp: "",
             explanation: "",
             code: undefined,
+            traceArgs: undefined,
         });
         setDifficultySource(null);
         setNameSource(null);
@@ -231,6 +232,19 @@ export const ProblemForm = ({ handleSave }: Props) => {
                     />
                 </div>
             </div>
+
+            {form.code && (
+                <div className="form-row-full">
+                    <div className="form-field">
+                        <label className="problem-label"> Test Input <span className="optional">(JSON array of args, e.g. [nums, target] — pre-fills "Trace this")</span> </label>
+                        <input
+                            value={form.traceArgs ?? ""}
+                            onChange={(e) => setForm({ ...form, traceArgs: e.target.value || undefined })}
+                            placeholder="[[2,7,11,15], 9]"
+                        />
+                    </div>
+                </div>
+            )}
 
             <div style={{ display: "flex", justifyContent: "flex-end" }}>
                 <Button disabled={isDisabled()} onClick={handleSubmit}> save </Button>

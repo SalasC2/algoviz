@@ -23,7 +23,7 @@ function App() {
   const [isDemoMode, setIsDemoMode] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState<any | null>(null);
   const [activeView, setActiveView] = useState<NavView>("journal");
-  const [pendingTraceCode, setPendingTraceCode] = useState<string | null>(null);
+  const [pendingTrace, setPendingTrace] = useState<{ code: string; args?: string } | null>(null);
 
   const { grouped, handleSave, handleUpdate, handleDelete } = useProblems();
   const user = useAuthUser();
@@ -46,8 +46,9 @@ function App() {
       <main className="main-content">
         {activeView === "tracer" ? (
           <Tracer
-            initialCode={pendingTraceCode}
-            onConsumeInitialCode={() => setPendingTraceCode(null)}
+            initialCode={pendingTrace?.code ?? null}
+            initialArgs={pendingTrace?.args}
+            onConsumeInitialCode={() => setPendingTrace(null)}
           />
         ) : !user && !isDemoMode ? (
           /* Landing when not logged in and not in demo mode */
@@ -93,8 +94,8 @@ function App() {
               problem={selectedProblem}
               onClose={() => setSelectedProblem(null)}
               onUpdate={isDemoMode ? () => {} : handleUpdate}
-              onTrace={(code) => {
-                setPendingTraceCode(code);
+              onTrace={(code, traceArgs) => {
+                setPendingTrace({ code, args: traceArgs });
                 setActiveView("tracer");
               }}
             />

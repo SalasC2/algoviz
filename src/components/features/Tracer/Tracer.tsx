@@ -22,10 +22,11 @@ type TracerProps = {
   // once (on mount) so it doesn't keep overwriting the user's own edits if
   // they navigate back to this tab later without a fresh handoff.
   initialCode?: string | null;
+  initialArgs?: string;
   onConsumeInitialCode?: () => void;
 };
 
-export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) => {
+export const Tracer = ({ initialCode, initialArgs, onConsumeInitialCode }: TracerProps = {}) => {
   const [mode, setMode] = useState<"function" | "component">("function");
 
   return (
@@ -45,7 +46,7 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
         </button>
       </div>
       {mode === "function" ? (
-        <FunctionTracer initialCode={initialCode} onConsumeInitialCode={onConsumeInitialCode} />
+        <FunctionTracer initialCode={initialCode} initialArgs={initialArgs} onConsumeInitialCode={onConsumeInitialCode} />
       ) : (
         <ComponentRenderer />
       )}
@@ -53,7 +54,7 @@ export const Tracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) 
   );
 };
 
-const FunctionTracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {}) => {
+const FunctionTracer = ({ initialCode, initialArgs, onConsumeInitialCode }: TracerProps = {}) => {
   const [code, setCode] = useState(initialCode || TRACER_EXAMPLES[0].code);
   const [entryName, setEntryName] = useState(TRACER_EXAMPLES[0].entry);
   const [argsText, setArgsText] = useState(TRACER_EXAMPLES[0].args);
@@ -64,7 +65,7 @@ const FunctionTracer = ({ initialCode, onConsumeInitialCode }: TracerProps = {})
   useEffect(() => {
     if (!initialCode) return;
     setCode(initialCode);
-    setArgsText("[]");
+    setArgsText(initialArgs || "[]");
     setExpectedText("");
     setCheckResult(null);
     setSnapshots([]);
