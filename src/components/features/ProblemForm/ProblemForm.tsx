@@ -133,9 +133,9 @@ export const ProblemForm = ({ handleSave }: Props) => {
                     <label className="problem-label">
                         Problem Number
                         {form.problemNumber && (
-                            <span className="rating-badge">
-                                {rating !== null ? `Rating: ${rating}` : '—'}
-                            </span>
+                            rating !== null
+                                ? <span className="rating-badge">{`Rating: ${rating}`}</span>
+                                : <span className="rating-empty">no rating</span>
                         )}
                     </label>
                     <input
