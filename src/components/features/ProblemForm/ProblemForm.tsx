@@ -38,6 +38,14 @@ export const ProblemForm = ({ handleSave }: Props) => {
         const lcNumber = Number(form.problemNumber);
         if (!form.problemNumber || !Number.isInteger(lcNumber) || lcNumber <= 0) {
             setRating(null);
+            if (difficultySource === "auto") {
+                setForm((f) => ({ ...f, difficulty: undefined }));
+                setDifficultySource(null);
+            }
+            if (nameSource === "auto") {
+                setForm((f) => ({ ...f, problem: "" }));
+                setNameSource(null);
+            }
             return;
         }
 
