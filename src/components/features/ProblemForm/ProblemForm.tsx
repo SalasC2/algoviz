@@ -31,6 +31,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
     });
 
     const [rating, setRating] = useState<number | null>(null);
+    const [difficultySource, setDifficultySource] = useState<"auto" | "manual" | null>(null);
 
     useEffect(() => {
         const lcNumber = Number(form.problemNumber);
@@ -56,6 +57,24 @@ export const ProblemForm = ({ handleSave }: Props) => {
                 setRating(data?.rating ?? null);
             });
 
+        if (difficultySource !== "manual") {
+            supabase
+                .from('leetcode_difficulty')
+                .select('difficulty')
+                .eq('lc_number', lcNumber)
+                .maybeSingle()
+                .then(({ data, error }) => {
+                    if (cancelled) return;
+                    if (error) {
+                        console.error('Failed to look up LeetCode difficulty', error);
+                        return;
+                    }
+                    const difficulty = data?.difficulty as FormType["difficulty"] | undefined;
+                    setForm((f) => ({ ...f, difficulty }));
+                    setDifficultySource(difficulty ? "auto" : null);
+                });
+        }
+
         return () => { cancelled = true; };
     }, [form.problemNumber]);
 
@@ -77,6 +96,7 @@ export const ProblemForm = ({ handleSave }: Props) => {
             explanation: "",
             code: undefined,
         });
+        setDifficultySource(null);
     }
 
     const isDisabled = (): boolean => {
@@ -97,7 +117,14 @@ export const ProblemForm = ({ handleSave }: Props) => {
                     />
                 </div>
                 <div className="form-field">
-                    <label className="problem-label"> Problem Number </label>
+                    <label className="problem-label">
+                        Problem Number
+                        {form.problemNumber && (
+                            <span className="rating-badge">
+                                {rating !== null ? `Rating: ${rating}` : '—'}
+                            </span>
+                        )}
+                    </label>
                     <input
                         value={form.problemNumber ?? ""}
                         onChange={(e) => setForm({ ...form, problemNumber: e.target.value })}
@@ -120,18 +147,14 @@ export const ProblemForm = ({ handleSave }: Props) => {
 
             <div className="form-row">
                 <div className="form-field">
-                    <label className="problem-label">
-                        Difficulty <span className="required">*</span>
-                        {form.problemNumber && (
-                            <span className="rating-badge">
-                                {rating !== null ? `Rating: ${rating}` : '—'}
-                            </span>
-                        )}
-                    </label>
+                    <label className="problem-label"> Difficulty <span className="required">*</span> </label>
                     <DropdownSelect
                         options={["Easy", "Medium", "Hard"]}
                         value={form.difficulty ?? ""}
-                        onChange={(difficulty) => setForm({ ...form, difficulty })}
+                        onChange={(difficulty) => {
+                            setDifficultySource("manual");
+                            setForm({ ...form, difficulty });
+                        }}
                         placeholder="Select difficulty"
                     />
                 </div>
