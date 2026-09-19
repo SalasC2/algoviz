@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { Button } from "../../ui/Button"
 import { DropdownSelect } from '../../ui/DropdownSelect/DropdownSelect';
 
 import type { FormType } from "../../../types";
 import { CORE_PATTERNS, ADVANCED_PATTERNS, SOLVE_STATUSES } from "../../../constants/patterns";
+import { supabase } from "../../../utils/supabase";
 
 import './ProblemForm.css';
 
@@ -28,6 +29,35 @@ export const ProblemForm = ({ handleSave }: Props) => {
         "explanation": "",
         "code": undefined,
     });
+
+    const [rating, setRating] = useState<number | null>(null);
+
+    useEffect(() => {
+        const lcNumber = Number(form.problemNumber);
+        if (!form.problemNumber || !Number.isInteger(lcNumber) || lcNumber <= 0) {
+            setRating(null);
+            return;
+        }
+
+        let cancelled = false;
+
+        supabase
+            .from('leetcode_ratings')
+            .select('rating')
+            .eq('lc_number', lcNumber)
+            .maybeSingle()
+            .then(({ data, error }) => {
+                if (cancelled) return;
+                if (error) {
+                    console.error('Failed to look up LeetCode rating', error);
+                    setRating(null);
+                    return;
+                }
+                setRating(data?.rating ?? null);
+            });
+
+        return () => { cancelled = true; };
+    }, [form.problemNumber]);
 
     const ALL_PATTERNS = [...CORE_PATTERNS, ...ADVANCED_PATTERNS];
 
@@ -90,7 +120,14 @@ export const ProblemForm = ({ handleSave }: Props) => {
 
             <div className="form-row">
                 <div className="form-field">
-                    <label className="problem-label"> Difficulty <span className="required">*</span> </label>
+                    <label className="problem-label">
+                        Difficulty <span className="required">*</span>
+                        {form.problemNumber && (
+                            <span className="rating-badge">
+                                {rating !== null ? `Rating: ${rating}` : '—'}
+                            </span>
+                        )}
+                    </label>
                     <DropdownSelect
                         options={["Easy", "Medium", "Hard"]}
                         value={form.difficulty ?? ""}

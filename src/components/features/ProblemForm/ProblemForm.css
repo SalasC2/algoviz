@@ -114,6 +114,14 @@
     font-weight: 400;
 }
 
+.rating-badge {
+    color: var(--text);
+    opacity: 0.6;
+    font-size: 11px;
+    font-weight: 400;
+    margin-left: 8px;
+}
+
 .form-code-textarea {
     font-family: var(--mono);
     min-height: 100px;
