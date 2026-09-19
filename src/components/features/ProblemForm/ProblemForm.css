@@ -87,8 +87,9 @@
 .form-field label {
    min-height: 32px;
    display: flex;
+   flex-wrap: wrap;
    align-items: flex-end;
-   padding-bottom: 4px; 
+   padding-bottom: 4px;
 }
 
 .problem-label {
