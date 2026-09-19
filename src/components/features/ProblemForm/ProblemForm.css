@@ -115,10 +115,15 @@
 }
 
 .rating-badge {
-    color: var(--text);
-    opacity: 0.6;
+    display: inline-flex;
+    align-items: center;
+    border: 0.5px solid var(--badge-gray);
+    border-radius: 4px;
+    background-color: var(--badge-gray-bg);
+    color: var(--badge-gray);
     font-size: 11px;
-    font-weight: 400;
+    font-weight: 500;
+    padding: 2px 5px;
     margin-left: 8px;
 }
 
